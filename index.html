@@ -203,6 +203,18 @@
   🏆 Highscores
 </div>
 
+<!-- PERSONAL BEST (shown while playing) -->
+<div id="personal-best"
+  style="position:fixed;top:18px;right:18px;display:none;
+         font-family:Georgia,serif;font-size:0.85rem;color:#d4a843;
+         background:rgba(0,0,0,0.65);border:1px solid #5a3a10;
+         padding:6px 12px;border-radius:3px;z-index:50;
+         pointer-events:none;letter-spacing:1px;line-height:1.6;">
+  <div style="color:#8a6030;font-size:0.75rem;">🏆 BESTE TIJD</div>
+  <div id="pb-time" style="font-size:1rem;">—</div>
+  <div id="pb-name" style="color:#8a6030;font-size:0.75rem;"></div>
+</div>
+
 <!-- LEADERBOARD PANEL -->
 <div id="lb-panel"
   style="position:fixed;top:60px;right:18px;width:280px;
@@ -799,6 +811,7 @@ function startGame() {
   document.getElementById('submit-score-btn').disabled = false;
   document.getElementById('submit-score-btn').textContent = 'Score opslaan';
   document.getElementById('player-name').value = '';
+  loadPersonalBest(); // show best score in top-right while playing
   renderer.domElement.requestPointerLock();
   document.getElementById('controls-bar').textContent =
     '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
@@ -1031,6 +1044,7 @@ function checkWin() {
     elapsedSeconds = (performance.now() - gameStartTime) / 1000;
     document.exitPointerLock();
     document.getElementById('timer').style.display = 'none';
+    document.getElementById('personal-best').style.display = 'none';
     document.getElementById('lb-btn').style.display = 'block';
     document.getElementById('win-time-text').textContent =
       `Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
@@ -1114,7 +1128,21 @@ function toggleLeaderboard() {
   if (!visible) renderLeaderboard(null);
 }
 
-// Submit score button
+async function loadPersonalBest() {
+  const scores = await loadScores();
+  const pbEl = document.getElementById('personal-best');
+  if (scores.length === 0) {
+    document.getElementById('pb-time').textContent = '—';
+    document.getElementById('pb-name').textContent = 'Nog geen scores';
+  } else {
+    const best = scores[0]; // already sorted fastest first
+    document.getElementById('pb-time').textContent = formatTime(best.time) + ' ❤' + best.lives;
+    document.getElementById('pb-name').textContent = best.name;
+  }
+  pbEl.style.display = 'block';
+}
+
+
 document.getElementById('submit-score-btn').addEventListener('click', async () => {
   const name = document.getElementById('player-name').value.trim() || 'Anoniem';
   document.getElementById('submit-score-btn').disabled = true;
@@ -1122,7 +1150,7 @@ document.getElementById('submit-score-btn').addEventListener('click', async () =
   await saveScore(name, Math.round(elapsedSeconds), playerLives);
   document.getElementById('score-form').style.display = 'none';
   document.getElementById('score-saved').style.display = 'block';
-  // Show leaderboard
+  // Show leaderboard panel
   document.getElementById('lb-panel').style.display = 'block';
   renderLeaderboard(name);
 });
