@@ -1,45 +1,57 @@
+Dat is een heel begrijpelijke keuze! JavaScript (zeker in combinatie met HTML5/Canvas of een library zoals Three.js of Phaser) is inderdaad veel makkelijker te delen via GitHub Pages of een browser dan een Python-script.
+
+Ik heb de README aangepast met de juiste programmeertaal en de extra bedankjes toegevoegd.
+
 ⚔️ Theseus & De Minotaurus: Het Labyrint
-Een meeslepende First-Person Action RPG gebaseerd op de klassieke Griekse mythologie. Betreed het legendarische labyrint van Knossos, gewapend met je zwaard en je verstand, om de confrontatie aan te gaan met de vreeswekkende Minotaurus.
+Een meeslepende First-Person Action RPG gebaseerd op de klassieke Griekse mythologie, volledig speelbaar in de browser.
 
 🏛️ Over de Game
-In dit schoolproject kruip je in de huid van Theseus. Je bent diep in het hart van het labyrint geworpen. Overleving is niet je enige doel; je moet de Minotaurus verslaan om Athene te bevrijden van zijn duistere tol.
+In dit schoolproject kruip je in de huid van Theseus. Je bent diep in het hart van het labyrint van Knossos geworpen. Je missie: overleef het doolhof, volg het spoor en versla de beruchte Minotaurus.
 
 Genre: First-Person Action RPG
 
 Thema: Griekse Mythologie
 
-Platform: PC (Windows/Mac)
+Platform: Web / Browser
+
+Technologie: JavaScript
 
 Status: Schoolproject / Prototype
 
 ✨ Kenmerken
-De Draad van Ariadne: Verdwaal niet in de eindeloze gangen. Volg de rode bolletjes die de weg wijzen die je hebt afgelegd – jouw enige hoop om de uitgang terug te vinden.
+Ga op zoek naar je Schild voor extra verdediging.
 
-First-Person Combat: Ervaar de spanning van het gevecht van heel dichtbij terwijl je het opneemt tegen de gevaren van het labyrint.
+De Draad van Ariadne: Verdwaal niet in de eindeloze gangen. De rode bolletjes markeren je pad – jouw enige houvast in de duisternis van het labyrint.
 
-Sfeervolle Setting: Een duistere, mythologische wereld geïnspireerd op de verhalen van koning Minos.
+First-Person Combat: Ervaar de actie vanuit de ogen van Theseus.
+
+Toegankelijkheid: Gebouwd in JavaScript, zodat de game direct in de browser draait zonder ingewikkelde installaties (in tegenstelling tot eerdere Python-versies).
 
 🕹️ Besturing
 🛠️ Gebruikte Technologieën
-Engine: [Vul hier in, bijv. Unity / Unreal Engine / Godot]
+Taal: JavaScript (ES6+)
 
-Taal: [Vul hier in, bijv. C# / C++]
+Rendering: three.js
 
-Assets: [Eventueel eigen gemaakte assets of gekozen bibliotheken]
+Versiebeheer: Git & GitHub
 
-📦 Installatie
-Download de laatste .
+📦 Installatie & Spelen
+Omdat dit een JavaScript-project is, kun je het direct starten:
 
-Pak het .zip bestand uit.
+Clone de repository: git clone https://github.com/jouwgebruikersnaam/project-naam.git
 
-Start TheseusGame.exe.
+Open index.html in je favoriete browser.
+
+(Optioneel) Bekijk de live demo via GitHub Pages!
 
 🙏 Speciale Dank
-Dit project is mede mogelijk gemaakt door:
+Dit project is tot stand gekomen met hulp van:
 
-Mijn vader: Voor alle essentiële functionele informatie en technische ondersteuning.
+Mijn vader: Voor de essentiële functionele informatie en logica.
 
-Mijn moeder: Voor de onmisbare hulp bij het verbranden van hout (voor de sfeer/art-stijl/fysieke elementen).
+Mijn moeder: Voor de creatieve ondersteuning en het verbranden van hout.
+
+AI Assistenten: Met dank aan Gemini en Claude voor de uitgebreide ondersteuning, en een kleine shout-out naar ChatGPT.
 
 📄 Licentie
-Gemaakt als onderdeel van een schoolopdracht. Alle rechten voorbehouden aan de maker.
+Gemaakt als onderdeel van een schoolopdracht. Alle rechten voorbehouden.
