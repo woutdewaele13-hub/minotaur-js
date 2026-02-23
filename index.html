@@ -255,8 +255,10 @@ function generateMaze(cols, rows) {
   for (let c = 1; c < startC; c++)           grid[midR][c] = 0; // west
   for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0; // east
 
-  // Guarantee player start (top-left area) is open
-  grid[1][1] = 0; grid[1][2] = 0; grid[2][1] = 0;
+  // Guarantee player start (top-left area) is open — clear a 3x3 patch
+  for (let r = 1; r <= 3; r++)
+    for (let c = 1; c <= 3; c++)
+      grid[r][c] = 0;
 
   return grid;
 }
@@ -416,8 +418,8 @@ for (let z = 3; z < MAZE_D - 3; z += 6) {
 // PLAYER
 // =============================================
 const playerHeight = 1.7;
-const playerRadius = 0.35;
-let playerPos = new THREE.Vector3(4.5, playerHeight, 4.5);
+const playerRadius = 0.25;
+let playerPos = new THREE.Vector3(2, playerHeight, 2);
 let playerYaw = 0, playerPitch = 0;
 let playerVelY = 0;
 let playerLives = 3;
@@ -626,7 +628,7 @@ window.addEventListener('resize', () => {
 // =============================================
 const threadPoints = [];
 let threadTimer = 0;
-let lastThreadPos = new THREE.Vector3(4.5, 0, 4.5);
+let lastThreadPos = new THREE.Vector3(2, 0, 2);
 const threadMat = new THREE.MeshBasicMaterial({ color: 0xff2020 });
 
 function addThreadPoint(pos) {
@@ -736,7 +738,7 @@ function startGame() {
   playerLives = 3; hasShield = false; shieldPickedUp = false;
   isAttacking = false; attackCooldown = 0; invincibleTimer = 0;
   document.getElementById('shield-status').style.display = 'none';
-  playerPos.set(4.5, playerHeight, 4.5);
+  playerPos.set(2, playerHeight, 2);
   playerYaw = 0; playerPitch = 0;
   minotaurHealth = 5; minotaurDead = false;
   minotaurGroup.position.set(25.5, 0, 25.5);
@@ -972,7 +974,7 @@ swordScene.add(shieldScreenGroup);
 // WIN CHECK
 // =============================================
 function checkWin() {
-  if (minotaurDead && playerPos.distanceTo(new THREE.Vector3(4.5, playerHeight, 4.5)) < 6) {
+  if (minotaurDead && playerPos.distanceTo(new THREE.Vector3(2, playerHeight, 2)) < 6) {
     gameRunning = false; gameWon = true;
     document.exitPointerLock();
     document.getElementById('win-overlay').style.display = 'flex';
@@ -1021,7 +1023,6 @@ function animate() {
 
     if (minimapVisible) drawMinimap();
   }
-
 
   // Main render
   renderer.autoClear = true;
