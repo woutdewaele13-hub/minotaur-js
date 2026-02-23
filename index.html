@@ -241,56 +241,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // =============================================
-// MAZE — procedurally generated, 15x15 open arena in centre
+// UPDATED MAZE — 61x61 (Expanded)
 // =============================================
 
-// Step 1: generate a maze on a grid of odd-dimension cells using
-// recursive backtracking (each cell = 1 unit, walls between them)
-const GRID_COLS = 51; // must be odd
-const GRID_ROWS = 51; // must be odd
+const GRID_COLS = 61; // Must be odd
+const GRID_ROWS = 61; // Must be odd
 
 function generateMaze(cols, rows) {
-  // Start all walls
   const grid = [];
   for (let r = 0; r < rows; r++) {
     grid.push(new Array(cols).fill(1));
   }
 
-  // Carve paths — only visit odd-indexed cells as "rooms"
   const visited = new Set();
   function idx(c, r) { return r * cols + c; }
 
   function carve(c, r) {
     visited.add(idx(c, r));
     grid[r][c] = 0;
-    // Shuffle directions
     const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
     for (const [dc, dr] of dirs) {
       const nc = c + dc, nr = r + dr;
       if (nc > 0 && nc < cols-1 && nr > 0 && nr < rows-1 && !visited.has(idx(nc, nr))) {
-        // Carve wall between
         grid[r + dr/2][c + dc/2] = 0;
         carve(nc, nr);
       }
     }
   }
-  carve(1, 1); // start from top-left room
+  carve(1, 1);
 
-  // Extra complexity: randomly remove ~18% of remaining walls to create loops
+  // Loop creation (18% wall removal)
   for (let r = 1; r < rows-1; r++) {
     for (let c = 1; c < cols-1; c++) {
       if (grid[r][c] === 1 && Math.random() < 0.18) {
-        // Only remove interior walls (not border)
         grid[r][c] = 0;
       }
     }
   }
 
-  // Guarantee border stays solid
+  // Border enforcement
   for (let c = 0; c < cols; c++) { grid[0][c] = 1; grid[rows-1][c] = 1; }
   for (let r = 0; r < rows; r++) { grid[r][0] = 1; grid[r][cols-1] = 1; }
 
-  // Step 2: carve a 15×15 open arena in the centre
+  // 15×15 Arena (Now centered in the 61x61 grid)
   const arenaSz = 15;
   const startC = Math.floor((cols - arenaSz) / 2);
   const startR = Math.floor((rows - arenaSz) / 2);
@@ -300,15 +293,15 @@ function generateMaze(cols, rows) {
     }
   }
 
-  // Carve 4 corridors leading into the arena from each cardinal direction
+  // Centered Corridors
   const midC = Math.floor(cols / 2);
   const midR = Math.floor(rows / 2);
-  for (let r = 1; r < startR; r++)           grid[r][midC] = 0; // north
-  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0; // south
-  for (let c = 1; c < startC; c++)           grid[midR][c] = 0; // west
-  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0; // east
+  for (let r = 1; r < startR; r++)             grid[r][midC] = 0; // North
+  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0; // South
+  for (let c = 1; c < startC; c++)             grid[midR][c] = 0; // West
+  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0; // East
 
-  // Guarantee player start (top-left area) is open — clear a 3x3 patch
+  // 3x3 Spawn Area
   for (let r = 1; r <= 3; r++)
     for (let c = 1; c <= 3; c++)
       grid[r][c] = 0;
@@ -317,8 +310,6 @@ function generateMaze(cols, rows) {
 }
 
 const expandedMaze = generateMaze(GRID_COLS, GRID_ROWS);
-const MAZE_W = GRID_COLS;
-const MAZE_D = GRID_ROWS;
 
 // =============================================
 // THREE.JS SETUP
