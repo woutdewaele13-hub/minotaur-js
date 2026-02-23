@@ -141,11 +141,9 @@
       border-radius: 3px; display: none;
       font-family: 'Georgia', serif; letter-spacing: 2px;
     }
-    #lb-list .lb-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #3a2000; }
-    #lb-list .lb-rank { color:#d4a843; width:28px; }
-    #lb-list .lb-name { flex:1; }
-    #lb-list .lb-score { color:#80ff80; }
-    #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
+
+    /* ---- WIN / LOSE OVERLAYS (FIXED) ---- */
+    #win-overlay, #lose-overlay {
       position: fixed; inset: 0;
       display: none; flex-direction: column;
       align-items: center; justify-content: center;
@@ -156,6 +154,33 @@
     #win-overlay h2  { font-size: 4rem; color: #80ff80; text-shadow: 0 0 40px #00ff0066; margin-bottom: 1rem; }
     #lose-overlay h2 { font-size: 4rem; color: #ff4040; text-shadow: 0 0 40px #ff000066; margin-bottom: 1rem; }
     #win-overlay p, #lose-overlay p { color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
+
+    #lb-list .lb-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #3a2000; }
+    #lb-list .lb-rank { color:#d4a843; width:28px; }
+    #lb-list .lb-name { flex:1; }
+    #lb-list .lb-score { color:#80ff80; }
+    #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
+
+    /* JSONBin setup banner */
+    #setup-banner {
+      position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+      background: rgba(10,5,0,0.97); border: 2px solid #d4a843;
+      color: #f5d090; padding: 1rem 1.5rem; border-radius: 6px;
+      font-size: 0.85rem; line-height: 1.7; text-align: center;
+      z-index: 300; display: none; max-width: 480px; pointer-events: all;
+    }
+    #setup-banner a { color: #80aaff; }
+    #setup-banner input {
+      font-family: monospace; font-size: 0.8rem;
+      background: #1a0800; border: 1px solid #d4a843;
+      color: #f5d090; padding: 4px 8px; border-radius: 3px;
+      width: 100%; margin: 4px 0;
+    }
+    #setup-banner button {
+      background: #8B2500; border: 1px solid #d4a843; color: #f5d090;
+      font-family: Georgia, serif; padding: 4px 16px; cursor: pointer;
+      border-radius: 3px; margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -165,11 +190,25 @@
   <h1>⚔ THESEUS ⚔</h1>
   <div class="subtitle">Dood de Minotaur!</div>
   <button class="menu-btn" id="startBtn">Start Game</button>
-  <button class="menu-btn" onclick="window.close()">Quit</button>
+  <button class="menu-btn" onclick="document.getElementById('setup-banner').style.display='block'">⚙ Leaderboard instellen</button>
   <div class="controls-hint">
     WASD — Lopen &nbsp;|&nbsp; Muis — Kijken &nbsp;|&nbsp; Klik — Aanvallen<br>
     R — Schild oppakken &nbsp;|&nbsp; T — Kaart aan/uit &nbsp;|&nbsp; ESC — Menu
   </div>
+</div>
+
+<!-- JSONBIN SETUP BANNER -->
+<div id="setup-banner">
+  <strong>📋 Leaderboard Instellen (1 minuut)</strong><br>
+  1. Ga naar <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Maak gratis account<br>
+  2. Klik "Create Bin" → plak <code>[]</code> als inhoud → Save<br>
+  3. Kopieer de <strong>Bin ID</strong> en plak hier:<br>
+  <input id="bin-id-input" placeholder="bijv. 6642abc123def456..." />
+  4. Ga naar API Keys → kopieer je <strong>Master Key</strong> en plak hier:<br>
+  <input id="api-key-input" placeholder="bijv. $2a$10$..." />
+  <button onclick="saveJsonBinConfig()">Opslaan & Verbinden</button>
+  <button onclick="document.getElementById('setup-banner').style.display='none'" style="background:#333;margin-left:8px;">Sluiten</button>
+  <div id="setup-status" style="color:#80ff80;margin-top:4px;"></div>
 </div>
 
 <!-- WIN -->
@@ -194,7 +233,7 @@
   <button class="menu-btn" onclick="location.reload()">Probeer opnieuw</button>
 </div>
 
-<!-- LEADERBOARD BUTTON (always visible during game) -->
+<!-- LEADERBOARD BUTTON -->
 <div id="lb-btn" onclick="toggleLeaderboard()"
   style="position:fixed;top:18px;right:18px;background:rgba(0,0,0,0.7);
          border:1px solid #d4a843;color:#d4a843;padding:6px 14px;
@@ -203,7 +242,7 @@
   🏆 Highscores
 </div>
 
-<!-- PERSONAL BEST (shown while playing) -->
+<!-- PERSONAL BEST -->
 <div id="personal-best"
   style="position:fixed;top:18px;right:18px;display:none;
          font-family:Georgia,serif;font-size:0.85rem;color:#d4a843;
@@ -240,22 +279,175 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// =============================================
-// UPDATED MAZE — 61x61 (Expanded)
-// =============================================
 
-const GRID_COLS = 61; // Must be odd
-const GRID_ROWS = 61; // Must be odd
+// =============================================
+// LEADERBOARD — JSONBin.io + localStorage fallback
+// =============================================
+// JSONBin config is saved in localStorage so you only set it once.
+// If not configured, scores are saved locally only (still works!).
+
+const LS_SCORES_KEY  = 'theseus_scores_v1';
+const LS_BIN_ID_KEY  = 'theseus_jsonbin_id';
+const LS_API_KEY_KEY = 'theseus_jsonbin_apikey';
+
+function getConfig() {
+  return {
+    binId:  localStorage.getItem(LS_BIN_ID_KEY)  || '',
+    apiKey: localStorage.getItem(LS_API_KEY_KEY) || ''
+  };
+}
+
+function saveJsonBinConfig() {
+  const binId  = document.getElementById('bin-id-input').value.trim();
+  const apiKey = document.getElementById('api-key-input').value.trim();
+  if (!binId || !apiKey) {
+    document.getElementById('setup-status').textContent = '⚠ Vul beide velden in!';
+    return;
+  }
+  localStorage.setItem(LS_BIN_ID_KEY, binId);
+  localStorage.setItem(LS_API_KEY_KEY, apiKey);
+  document.getElementById('setup-status').textContent = '✓ Opgeslagen! Verbinding wordt getest...';
+  testJsonBinConnection(binId, apiKey);
+}
+
+async function testJsonBinConnection(binId, apiKey) {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      headers: { 'X-Master-Key': apiKey }
+    });
+    if (res.ok) {
+      document.getElementById('setup-status').textContent = '✓ Verbonden! Leaderboard werkt.';
+      setTimeout(() => document.getElementById('setup-banner').style.display = 'none', 2000);
+    } else {
+      document.getElementById('setup-status').textContent = '✗ Fout: Controleer je Bin ID en API key.';
+    }
+  } catch(e) {
+    document.getElementById('setup-status').textContent = '✗ Netwerkfout. Probeer opnieuw.';
+  }
+}
+
+// Load scores from JSONBin or localStorage
+async function loadScores() {
+  const { binId, apiKey } = getConfig();
+
+  if (binId && apiKey) {
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+        headers: { 'X-Master-Key': apiKey }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const scores = Array.isArray(data.record) ? data.record : [];
+        // Cache locally
+        localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
+        return scores;
+      }
+    } catch(e) { /* fall through to local */ }
+  }
+
+  // Local fallback
+  try {
+    return JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+// Save a score
+async function saveScore(name, seconds, lives) {
+  const entry = {
+    name: name.trim().slice(0, 20) || 'Anoniem',
+    time: Math.round(seconds),
+    lives,
+    date: new Date().toLocaleDateString('nl-NL')
+  };
+
+  // Load existing, add, sort, trim
+  let scores = [];
+  try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]'); } catch(e) {}
+  scores.push(entry);
+  scores.sort((a, b) => a.time - b.time || b.lives - a.lives);
+  scores = scores.slice(0, 20);
+
+  // Save locally first (instant)
+  localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
+
+  // Try JSONBin
+  const { binId, apiKey } = getConfig();
+  if (binId && apiKey) {
+    try {
+      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey
+        },
+        body: JSON.stringify(scores)
+      });
+    } catch(e) { /* saved locally, that's fine */ }
+  }
+
+  return scores;
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function renderRows(scores, highlightName) {
+  if (!scores.length) return '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
+  return scores.map((s, i) => {
+    const mine = highlightName && s.name === highlightName;
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+    return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
+      <span class="lb-rank">${medal}</span>
+      <span class="lb-name">${s.name}</span>
+      <span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span>
+    </div>`;
+  }).join('');
+}
+
+async function renderLeaderboard(highlightName) {
+  const el = document.getElementById('lb-list');
+  el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
+  const { binId } = getConfig();
+  if (!binId) {
+    el.innerHTML = `<div style="color:#d4a843;text-align:center;font-size:0.8rem;padding:0.5rem;line-height:1.8;">
+      📋 Lokale scores (geen server).<br>
+      <span style="color:#8a6030;">Klik ⚙ in het menu om een<br>online leaderboard in te stellen.</span>
+    </div>`;
+  }
+  const scores = await loadScores();
+  el.innerHTML = (el.innerHTML.includes('Lokale scores') ? el.innerHTML : '') + renderRows(scores, highlightName);
+}
+
+function toggleLeaderboard() {
+  const panel = document.getElementById('lb-panel');
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  if (!visible) renderLeaderboard(null);
+}
+
+async function loadPersonalBest() {
+  const scores = await loadScores();
+  if (!scores.length) return;
+  const best = scores[0];
+  document.getElementById('pb-time').textContent = formatTime(best.time);
+  document.getElementById('pb-name').textContent = best.name;
+  document.getElementById('personal-best').style.display = 'block';
+}
+
+// =============================================
+// MAZE GENERATION
+// =============================================
+const GRID_COLS = 61;
+const GRID_ROWS = 61;
 
 function generateMaze(cols, rows) {
   const grid = [];
-  for (let r = 0; r < rows; r++) {
-    grid.push(new Array(cols).fill(1));
-  }
-
+  for (let r = 0; r < rows; r++) { grid.push(new Array(cols).fill(1)); }
   const visited = new Set();
   function idx(c, r) { return r * cols + c; }
-
   function carve(c, r) {
     visited.add(idx(c, r));
     grid[r][c] = 0;
@@ -269,47 +461,32 @@ function generateMaze(cols, rows) {
     }
   }
   carve(1, 1);
-
-  // Loop creation (18% wall removal)
-  for (let r = 1; r < rows-1; r++) {
-    for (let c = 1; c < cols-1; c++) {
-      if (grid[r][c] === 1 && Math.random() < 0.18) {
-        grid[r][c] = 0;
-      }
-    }
-  }
-
-  // Border enforcement
+  for (let r = 1; r < rows-1; r++)
+    for (let c = 1; c < cols-1; c++)
+      if (grid[r][c] === 1 && Math.random() < 0.18) grid[r][c] = 0;
   for (let c = 0; c < cols; c++) { grid[0][c] = 1; grid[rows-1][c] = 1; }
   for (let r = 0; r < rows; r++) { grid[r][0] = 1; grid[r][cols-1] = 1; }
-
-  // 15×15 Arena (Now centered in the 61x61 grid)
   const arenaSz = 15;
   const startC = Math.floor((cols - arenaSz) / 2);
   const startR = Math.floor((rows - arenaSz) / 2);
-  for (let r = startR; r < startR + arenaSz; r++) {
-    for (let c = startC; c < startC + arenaSz; c++) {
+  for (let r = startR; r < startR + arenaSz; r++)
+    for (let c = startC; c < startC + arenaSz; c++)
       grid[r][c] = 0;
-    }
-  }
-
-  // Centered Corridors
   const midC = Math.floor(cols / 2);
   const midR = Math.floor(rows / 2);
-  for (let r = 1; r < startR; r++)             grid[r][midC] = 0; // North
-  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0; // South
-  for (let c = 1; c < startC; c++)             grid[midR][c] = 0; // West
-  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0; // East
-
-  // 3x3 Spawn Area
+  for (let r = 1; r < startR; r++)              grid[r][midC] = 0;
+  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0;
+  for (let c = 1; c < startC; c++)              grid[midR][c] = 0;
+  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0;
   for (let r = 1; r <= 3; r++)
     for (let c = 1; c <= 3; c++)
       grid[r][c] = 0;
-
   return grid;
 }
 
 const expandedMaze = generateMaze(GRID_COLS, GRID_ROWS);
+const MAZE_W = GRID_COLS;
+const MAZE_D = GRID_ROWS;
 
 // =============================================
 // THREE.JS SETUP
@@ -331,10 +508,12 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  swordCamera.aspect = window.innerWidth / window.innerHeight;
+  swordCamera.updateProjectionMatrix();
 });
 
 // =============================================
-// TEXTURES (procedural)
+// TEXTURES
 // =============================================
 function makeTexture(drawFn, size = 128) {
   const c = document.createElement('canvas');
@@ -346,8 +525,7 @@ function makeTexture(drawFn, size = 128) {
 }
 
 const wallTex = makeTexture((ctx, s) => {
-  ctx.fillStyle = '#4a3a2a';
-  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#4a3a2a'; ctx.fillRect(0, 0, s, s);
   for (let y = 0; y < s; y += 16) {
     const shift = (Math.floor(y / 16) % 2) * 24;
     for (let x = -shift; x < s + 24; x += 48) {
@@ -358,47 +536,40 @@ const wallTex = makeTexture((ctx, s) => {
     }
   }
 });
-
 const floorTex = makeTexture((ctx, s) => {
-  ctx.fillStyle = '#2a2018';
-  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#2a2018'; ctx.fillRect(0, 0, s, s);
   for (let i = 0; i < 200; i++) {
     ctx.fillStyle = `rgba(${80 + Math.random() * 40},${60 + Math.random() * 30},30,0.4)`;
     const x = Math.random() * s, y = Math.random() * s;
     ctx.fillRect(x, y, 2 + Math.random() * 6, 2 + Math.random() * 6);
   }
-  // Grid lines
   ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
   for (let i = 0; i < s; i += 16) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
   }
 });
-
 wallTex.repeat.set(0.5, 0.5);
 floorTex.repeat.set(0.25, 0.25);
 
 // =============================================
 // WORLD BUILDING
 // =============================================
-const wallMat = new THREE.MeshLambertMaterial({ map: wallTex });
+const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex });
 const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
 
-// Floor
 const floorGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI / 2;
-floor.position.set(MAZE_W / 2, 0, MAZE_D / 2);
-scene.add(floor);
+const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+floorMesh.rotation.x = -Math.PI / 2;
+floorMesh.position.set(MAZE_W / 2, 0, MAZE_D / 2);
+scene.add(floorMesh);
 
-// Ceiling
 const ceilGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
 const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshLambertMaterial({ color: 0x111008 }));
 ceil.rotation.x = Math.PI / 2;
 ceil.position.set(MAZE_W / 2, 5, MAZE_D / 2);
 scene.add(ceil);
 
-// Walls (merged by rows for performance)
 const wallBoxes = [];
 for (let z = 0; z < MAZE_D; z++) {
   let x = 0;
@@ -417,46 +588,32 @@ for (let z = 0; z < MAZE_D; z++) {
   }
 }
 
-// Ambient + torches
 const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
 scene.add(ambient);
 
-// Place flickering lights across the maze with random brightness variation
-// so some areas are warmly lit and others feel dark and threatening
 for (let z = 3; z < MAZE_D - 3; z += 6) {
   for (let x = 3; x < MAZE_W - 3; x += 6) {
     if (expandedMaze[z][x] === 0) {
-      // Randomly decide: bright torch, dim torch, or skip (dark patch)
       const roll = Math.random();
-      if (roll < 0.25) continue; // ~25% of spots stay dark
-
-      const isDim    = roll < 0.55; // another 30% are dim
-      const isBright = roll > 0.85; // top 15% are extra bright
-
+      if (roll < 0.25) continue;
+      const isDim    = roll < 0.55;
+      const isBright = roll > 0.85;
       const baseIntensity = isDim ? 0.6 : isBright ? 3.5 : 2.0;
       const baseRange     = isDim ? 7   : isBright ? 18  : 12;
-      // Dim lights lean more red, bright ones more yellow-orange
-      const col = isDim    ? 0xdd3800 :
-                  isBright ? 0xff9940 : 0xff6010;
-
+      const col = isDim ? 0xdd3800 : isBright ? 0xff9940 : 0xff6010;
       const light = new THREE.PointLight(col, baseIntensity, baseRange);
       light.position.set(x + 0.5, 4, z + 0.5);
       scene.add(light);
-
-      // Flicker — dim lights flicker more slowly and subtly
       const flickerFn = () => {
         const swing = isDim ? 0.3 : isBright ? 1.8 : 1.2;
         light.intensity = baseIntensity * (0.75 + Math.random() * swing * 0.5);
-        const delay = isDim ? 200 + Math.random() * 400
-                            : 80  + Math.random() * 180;
+        const delay = isDim ? 200 + Math.random() * 400 : 80 + Math.random() * 180;
         setTimeout(flickerFn, delay);
       };
       flickerFn();
     }
   }
 }
-
-
 
 // =============================================
 // PLAYER
@@ -465,22 +622,19 @@ const playerHeight = 1.7;
 const playerRadius = 0.25;
 let playerPos = new THREE.Vector3(2, playerHeight, 2);
 let playerYaw = 0, playerPitch = 0;
-let playerVelY = 0;
 let playerLives = 3;
 let hasShield = false;
 let shieldPickedUp = false;
 let isAttacking = false;
 let attackCooldown = 0;
-let invincibleTimer = 0; // brief invincibility after hit
+let invincibleTimer = 0;
 
 camera.position.copy(playerPos);
 
-// Keys
 const keys = {};
 document.addEventListener('keydown', e => keys[e.code] = true);
 document.addEventListener('keyup',   e => keys[e.code] = false);
 
-// Mouse look (pointer lock)
 let locked = false;
 document.addEventListener('click', () => {
   if (gameRunning && !locked) renderer.domElement.requestPointerLock();
@@ -503,7 +657,6 @@ function isWall(x, z) {
   if (gx < 0 || gx >= MAZE_W || gz < 0 || gz >= MAZE_D) return true;
   return expandedMaze[gz][gx] === 1;
 }
-
 function playerCanMove(nx, nz) {
   const r = playerRadius;
   return !isWall(nx - r, nz - r) && !isWall(nx + r, nz - r) &&
@@ -513,15 +666,14 @@ function playerCanMove(nx, nz) {
 // =============================================
 // MINOTAUR
 // =============================================
-// Arena centre: grid is 51x51, arena 15x15 starts at col/row 18, centre at 25
 const minotaurGroup = new THREE.Group();
 minotaurGroup.position.set(25.5, 0, 25.5);
 scene.add(minotaurGroup);
 
 function makeColor(r, g, b) { return new THREE.MeshLambertMaterial({ color: new THREE.Color(r/255, g/255, b/255) }); }
-const skinMat = makeColor(70, 60, 55);
-const furMat  = makeColor(30, 25, 20);
-const hornMat = makeColor(150, 140, 130);
+const skinMat  = makeColor(70, 60, 55);
+const furMat   = makeColor(30, 25, 20);
+const hornMat  = makeColor(150, 140, 130);
 const blackMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
 const redMat   = new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 });
 
@@ -534,14 +686,7 @@ function addSphere(parent, r, px, py, pz, mat) {
   m.position.set(px, py, pz); parent.add(m); return m;
 }
 
-// Torso
-addBox(minotaurGroup, 1.2, 2, 0.8,   0, 2, 0,   skinMat);
-// Chest detail
-for (let i = 0; i < 8; i++) {
-  addBox(minotaurGroup, 0.25, 0.12, 0.15,
-    (Math.random()-0.5), 1.5 + i*0.05, 0.35, skinMat);
-}
-// Head root
+addBox(minotaurGroup, 1.2, 2, 0.8, 0, 2, 0, skinMat);
 const headGroup = new THREE.Group();
 headGroup.position.set(0, 3.5, 0.3);
 minotaurGroup.add(headGroup);
@@ -549,26 +694,21 @@ addBox(headGroup, 0.9, 0.7, 1.2, 0, 0, 0, furMat);
 addBox(headGroup, 0.6, 0.4, 0.8, 0, -0.2, 0.5, furMat);
 addSphere(headGroup, 0.08, -0.15, -0.25, 0.9, blackMat);
 addSphere(headGroup, 0.08,  0.15, -0.25, 0.9, blackMat);
-// Eyes
-const eyeL = addSphere(headGroup, 0.1, -0.25, 0.15, 0.7, redMat);
-const eyeR = addSphere(headGroup, 0.1,  0.25, 0.15, 0.7, redMat);
-// Horns
+addSphere(headGroup, 0.1, -0.25, 0.15, 0.7, redMat);
+addSphere(headGroup, 0.1,  0.25, 0.15, 0.7, redMat);
 for (const side of [-1, 1]) {
   for (let i = 0; i < 8; i++) {
     addSphere(headGroup, Math.max(0.04, 0.18 - i*0.015),
       0.4*side + i*0.07*side, 0.3 + i*0.1, -i*0.04, hornMat);
   }
 }
-// Arms
 for (const side of [-1, 1]) {
   addSphere(minotaurGroup, 0.25, 0.85*side, 2.8, 0, skinMat);
   for (let i = 0; i < 6; i++) {
-    addBox(minotaurGroup, 0.3, 0.22, 0.3,
-      0.85*side, 2.6 - i*0.28, 0, skinMat);
+    addBox(minotaurGroup, 0.3, 0.22, 0.3, 0.85*side, 2.6 - i*0.28, 0, skinMat);
   }
   addBox(minotaurGroup, 0.4, 0.3, 0.3, 0.85*side, -0.2, 0.3, skinMat);
 }
-// Legs
 for (const side of [-1, 1]) {
   addSphere(minotaurGroup, 0.25, 0.5*side, 0.8, 0, furMat);
   for (let i = 0; i < 5; i++) {
@@ -579,7 +719,6 @@ for (const side of [-1, 1]) {
   }
   addBox(minotaurGroup, 0.5, 0.22, 0.65, 0.5*side, -0.4, -0.5, blackMat);
 }
-// Tail
 for (let i = 0; i < 6; i++) {
   addBox(minotaurGroup, 0.12, 0.12, 0.18, 0, 1.5 - i*0.15, -0.5 - i*0.1, furMat);
 }
@@ -589,37 +728,31 @@ let minotaurDead = false;
 let minotaurState = 'patrol';
 let minotaurPatrolTarget = new THREE.Vector3(25, 0, 20);
 let minotaurAttackCooldown = 0;
-const MINOTAUR_CHASE_SPEED = 2.8;
+const MINOTAUR_CHASE_SPEED  = 2.8;
 const MINOTAUR_PATROL_SPEED = 1.0;
 const DETECTION_RANGE = 16;
-const ATTACK_RANGE = 2.5;
-
-// Bobbing animation
+const ATTACK_RANGE    = 2.5;
 let minotaurBobTime = 0;
 
 // =============================================
 // SHIELD PICKUP
 // =============================================
 const shieldGroup = new THREE.Group();
-shieldGroup.position.set(28, 1, 25); // inside the centre arena
+shieldGroup.position.set(28, 1, 25);
 scene.add(shieldGroup);
 
 const shieldMat = new THREE.MeshLambertMaterial({ color: 0xb07030 });
 const shieldRim = new THREE.MeshLambertMaterial({ color: 0x8a5020 });
-// Main disc
 const shieldMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.12, 16), shieldMat);
 shieldMesh.rotation.x = Math.PI/2;
 shieldGroup.add(shieldMesh);
-// Center boss
 const boss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), shieldRim);
 shieldGroup.add(boss);
-// Rings
-for (const r of [0.45, 0.68]) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.04, 6, 16), shieldRim);
+for (const rr of [0.45, 0.68]) {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.04, 6, 16), shieldRim);
   ring.rotation.x = Math.PI/2;
   shieldGroup.add(ring);
 }
-let shieldRotY = 0;
 
 // =============================================
 // SWORD (screen-space)
@@ -633,42 +766,29 @@ swordScene.add(swordGroup);
 const silverMat = new THREE.MeshLambertMaterial({ color: 0xc8d0d8, emissive: 0x102030, emissiveIntensity: 0.3 });
 const bronzeMat = new THREE.MeshLambertMaterial({ color: 0xb87333 });
 const brownMat  = new THREE.MeshLambertMaterial({ color: 0x6b3a1f });
-const darkMat   = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
 
-// Blade
 for (let i = 0; i < 6; i++) {
   const bm = new THREE.Mesh(new THREE.BoxGeometry(0.06 - i*0.008, 0.1, 0.02), silverMat);
   bm.position.set(0, i*0.1, 0); swordGroup.add(bm);
 }
-// Tip
 const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 4), silverMat);
 tip.position.set(0, 0.64, 0); swordGroup.add(tip);
-// Crossguard
 const cg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.04, 0.04), bronzeMat);
 cg.position.set(0, -0.05, 0); swordGroup.add(cg);
-// Handle
 for (let i = 0; i < 4; i++) {
   const hm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.05), brownMat);
   hm.position.set(0, -0.12 - i*0.06, 0); swordGroup.add(hm);
 }
-// Pommel
 const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), bronzeMat);
 pommel.position.set(0, -0.38, 0); swordGroup.add(pommel);
 
-// Sword light
-const swordLight = new THREE.AmbientLight(0xffffff, 2);
-swordScene.add(swordLight);
+swordScene.add(new THREE.AmbientLight(0xffffff, 2));
 
 let swordSwingAngle = 0;
 let swordSwinging = false;
 
-window.addEventListener('resize', () => {
-  swordCamera.aspect = window.innerWidth / window.innerHeight;
-  swordCamera.updateProjectionMatrix();
-});
-
 // =============================================
-// ARIADNE THREAD (breadcrumb trail)
+// ARIADNE THREAD
 // =============================================
 const threadPoints = [];
 let threadTimer = 0;
@@ -680,9 +800,7 @@ function addThreadPoint(pos) {
   m.position.copy(pos).setY(0.15);
   scene.add(m);
   threadPoints.push(m);
-  if (threadPoints.length > 200) {
-    scene.remove(threadPoints.shift());
-  }
+  if (threadPoints.length > 200) scene.remove(threadPoints.shift());
 }
 
 // =============================================
@@ -697,35 +815,25 @@ function drawMinimap() {
   mapCtx.clearRect(0, 0, W, H);
   mapCtx.fillStyle = 'rgba(0,0,0,0.85)';
   mapCtx.fillRect(0, 0, W, H);
-
   const cellW = W / MAZE_W, cellH = H / MAZE_D;
-  // Walls
   mapCtx.fillStyle = '#555';
-  for (let z = 0; z < MAZE_D; z += 3) {
-    for (let x = 0; x < MAZE_W; x += 3) {
-      if (expandedMaze[z][x] === 1) {
+  for (let z = 0; z < MAZE_D; z += 3)
+    for (let x = 0; x < MAZE_W; x += 3)
+      if (expandedMaze[z][x] === 1)
         mapCtx.fillRect(x * cellW, z * cellH, cellW * 3, cellH * 3);
-      }
-    }
-  }
-  // Thread
   mapCtx.fillStyle = 'rgba(200,0,0,0.6)';
-  for (const tp of threadPoints) {
+  for (const tp of threadPoints)
     mapCtx.fillRect(tp.position.x * cellW - 1, tp.position.z * cellH - 1, 2, 2);
-  }
-  // Shield
   if (!shieldPickedUp) {
     mapCtx.fillStyle = '#ffff00';
     mapCtx.beginPath();
     mapCtx.arc(shieldGroup.position.x * cellW, shieldGroup.position.z * cellH, 3, 0, Math.PI*2);
     mapCtx.fill();
   }
-  // Minotaur
   mapCtx.fillStyle = minotaurDead ? '#888' : '#ff2020';
   mapCtx.beginPath();
   mapCtx.arc(minotaurGroup.position.x * cellW, minotaurGroup.position.z * cellH, 4, 0, Math.PI*2);
   mapCtx.fill();
-  // Player
   mapCtx.fillStyle = '#00ff80';
   const px = playerPos.x * cellW, pz = playerPos.z * cellH;
   mapCtx.save();
@@ -774,7 +882,9 @@ function flashAttack() {
 let gameRunning = false;
 let gameOver = false;
 let gameWon = false;
-let clock = new THREE.Clock();
+let gameStartTime = 0;
+let elapsedSeconds = 0;
+const clock = new THREE.Clock();
 
 function startGame() {
   document.getElementById('menu').style.display = 'none';
@@ -797,12 +907,13 @@ function startGame() {
   document.getElementById('lb-btn').style.display = 'none';
   document.getElementById('lb-panel').style.display = 'none';
   document.getElementById('win-overlay').style.display = 'none';
+  document.getElementById('lose-overlay').style.display = 'none';
   document.getElementById('score-form').style.display = 'block';
   document.getElementById('score-saved').style.display = 'none';
   document.getElementById('submit-score-btn').disabled = false;
   document.getElementById('submit-score-btn').textContent = 'Score opslaan';
   document.getElementById('player-name').value = '';
-  loadPersonalBest(); // show best score in top-right while playing
+  loadPersonalBest();
   renderer.domElement.requestPointerLock();
   document.getElementById('controls-bar').textContent =
     '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
@@ -824,8 +935,6 @@ document.addEventListener('keydown', e => {
         shieldGroup.visible = false;
         document.getElementById('shield-status').style.display = 'block';
         showMessage('🛡 Schild uitgerust! Extra bescherming!');
-        document.getElementById('controls-bar').textContent =
-          'Schild uitgerust! [R] Schild neerleggen | [WASD] Lopen | [Klik] Aanvallen';
       } else {
         showMessage('Kom dichter bij het schild!', 1500);
       }
@@ -834,8 +943,6 @@ document.addEventListener('keydown', e => {
       shieldGroup.position.set(playerPos.x + 1, 1, playerPos.z);
       shieldGroup.visible = true;
       document.getElementById('shield-status').style.display = 'none';
-      document.getElementById('controls-bar').textContent =
-        '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
     }
   }
   if (e.code === 'Escape') {
@@ -856,28 +963,20 @@ function doAttack() {
   attackCooldown = 0.5;
   swordSwinging = true;
   flashAttack();
-
-  // Check hit
   if (!minotaurDead) {
     const toMinotaur = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
     const forward = new THREE.Vector3(-Math.sin(playerYaw), 0, -Math.cos(playerYaw));
     const dot = forward.dot(toMinotaur);
     const dist = playerPos.distanceTo(minotaurGroup.position);
-
     if (dist < 4 && dot > 0.55) {
       minotaurHealth -= 1;
       showMessage(`Raak! Minotaur leven: ${minotaurHealth}/5`, 1200);
-
-      // Knockback
       const kbDir = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
       minotaurGroup.position.addScaledVector(kbDir, 2);
-
       if (minotaurHealth <= 0) {
         minotaurDead = true;
         minotaurGroup.visible = false;
         showMessage('Minotaur verslagen! Keer terug naar het begin om te WINNEN!', 5000);
-        document.getElementById('controls-bar').textContent =
-          'Minotaur verslagen! Keer terug naar het startpunt (links boven in de kaart)!';
       }
     }
   }
@@ -895,44 +994,27 @@ function minotaurCanMoveTo(pos) {
 
 function updateMinotaur(dt) {
   if (minotaurDead) return;
-
   const toPlayer = new THREE.Vector3().subVectors(playerPos, minotaurGroup.position);
   toPlayer.y = 0;
   const dist = toPlayer.length();
-
   if (dist < DETECTION_RANGE) minotaurState = 'chase';
   else if (dist > DETECTION_RANGE * 1.5) minotaurState = 'patrol';
-
   minotaurBobTime += dt * 3;
   minotaurGroup.position.y = Math.sin(minotaurBobTime) * 0.1;
-  // Eye glow pulsing
-  const glow = 0.6 + Math.sin(minotaurBobTime * 2) * 0.4;
-  redMat.emissiveIntensity = glow;
+  redMat.emissiveIntensity = 0.6 + Math.sin(minotaurBobTime * 2) * 0.4;
 
   if (minotaurState === 'chase') {
     const dir = toPlayer.clone().normalize();
     const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_CHASE_SPEED * dt);
     newPos.y = 0;
-    if (minotaurCanMoveTo(newPos)) {
-      minotaurGroup.position.copy(newPos);
-    }
+    if (minotaurCanMoveTo(newPos)) minotaurGroup.position.copy(newPos);
     minotaurGroup.lookAt(new THREE.Vector3(playerPos.x, minotaurGroup.position.y, playerPos.z));
-
-    // Attack
-    if (dist < ATTACK_RANGE && minotaurAttackCooldown <= 0) {
-      minotaurAttack();
-    }
+    if (dist < ATTACK_RANGE && minotaurAttackCooldown <= 0) minotaurAttack();
   } else {
-    // Patrol
     const toDest = new THREE.Vector3().subVectors(minotaurPatrolTarget, minotaurGroup.position);
     toDest.y = 0;
     if (toDest.length() < 2) {
-      // New target
-      minotaurPatrolTarget.set(
-        10 + Math.random() * (MAZE_W - 20),
-        0,
-        10 + Math.random() * (MAZE_D - 20)
-      );
+      minotaurPatrolTarget.set(10 + Math.random() * (MAZE_W - 20), 0, 10 + Math.random() * (MAZE_D - 20));
     } else {
       const dir = toDest.normalize();
       const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_PATROL_SPEED * dt);
@@ -941,14 +1023,10 @@ function updateMinotaur(dt) {
         minotaurGroup.position.copy(newPos);
         minotaurGroup.lookAt(new THREE.Vector3(minotaurPatrolTarget.x, minotaurGroup.position.y, minotaurPatrolTarget.z));
       } else {
-        minotaurPatrolTarget.set(
-          10 + Math.random() * (MAZE_W - 20), 0,
-          10 + Math.random() * (MAZE_D - 20)
-        );
+        minotaurPatrolTarget.set(10 + Math.random() * (MAZE_W - 20), 0, 10 + Math.random() * (MAZE_D - 20));
       }
     }
   }
-
   if (minotaurAttackCooldown > 0) minotaurAttackCooldown -= dt;
 }
 
@@ -956,7 +1034,6 @@ function minotaurAttack() {
   if (gameOver || invincibleTimer > 0) return;
   minotaurAttackCooldown = 2.0;
   invincibleTimer = 1.5;
-
   if (hasShield && Math.random() < 0.5) {
     showMessage('🛡 Schild geblokkeerd!', 1000);
     return;
@@ -976,36 +1053,25 @@ function minotaurAttack() {
 // PLAYER MOVEMENT
 // =============================================
 function updatePlayer(dt) {
-  // Direction vectors
   const sinY = Math.sin(playerYaw), cosY = Math.cos(playerYaw);
   const forward = new THREE.Vector3(-sinY, 0, -cosY);
   const right   = new THREE.Vector3(cosY, 0, -sinY);
-
   const moveSpeed = 5;
   let move = new THREE.Vector3();
   if (keys['KeyW'] || keys['ArrowUp'])    move.addScaledVector(forward, 1);
   if (keys['KeyS'] || keys['ArrowDown'])  move.addScaledVector(forward, -1);
   if (keys['KeyA'] || keys['ArrowLeft'])  move.addScaledVector(right, -1);
   if (keys['KeyD'] || keys['ArrowRight']) move.addScaledVector(right, 1);
-
   if (move.length() > 0) move.normalize();
-
   let nx = playerPos.x + move.x * moveSpeed * dt;
   let nz = playerPos.z + move.z * moveSpeed * dt;
-
   if (playerCanMove(nx, playerPos.z)) playerPos.x = nx;
   if (playerCanMove(playerPos.x, nz)) playerPos.z = nz;
-
-  // Camera
   camera.position.copy(playerPos);
   camera.rotation.order = 'YXZ';
   camera.rotation.y = playerYaw;
   camera.rotation.x = playerPitch;
-
-  // Invincibility timer
   if (invincibleTimer > 0) invincibleTimer -= dt;
-
-  // Thread
   threadTimer += dt;
   if (playerPos.distanceTo(lastThreadPos) > 0.6 && threadTimer > 0.3) {
     addThreadPoint(playerPos);
@@ -1015,12 +1081,11 @@ function updatePlayer(dt) {
 }
 
 // =============================================
-// SHIELD VISUAL (on screen)
+// SHIELD SCREEN
 // =============================================
 const shieldScreenGroup = new THREE.Group();
 shieldScreenGroup.position.set(-0.28, -0.22, -0.5);
 shieldScreenGroup.visible = false;
-
 const shieldScreenMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 12), shieldMat.clone());
 shieldScreenMesh.rotation.x = Math.PI/2;
 shieldScreenGroup.add(shieldScreenMesh);
@@ -1040,12 +1105,10 @@ function checkWin() {
     document.getElementById('win-time-text').textContent =
       `Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
     document.getElementById('win-overlay').style.display = 'flex';
-    // Pre-load leaderboard in background
     renderLeaderboard(null);
   }
 }
 
-// Shield proximity hint
 function checkShieldProximity() {
   if (!shieldPickedUp) {
     const d = playerPos.distanceTo(shieldGroup.position);
@@ -1057,125 +1120,26 @@ function checkShieldProximity() {
 }
 
 // =============================================
-// TIMER
+// SUBMIT SCORE
 // =============================================
-let gameStartTime = 0;
-let elapsedSeconds = 0;
-
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2,'0')}`;
-}
-
-// =============================================
-// LEADERBOARD via Google Apps Script
-// =============================================
-// Paste your deployed Apps Script URL below after setup.
-// Until then the leaderboard stores scores locally in this browser session only.
-let SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_ID/exec'; // <-- paste your URL here after the 5-min setup
-
-// In-memory fallback scores (survive only while page is open)
-let localScores = [];
-
-async function loadScores() {
-  if (!SCRIPT_URL) return localScores;
-  try {
-    const res = await fetch(SCRIPT_URL + '?action=get');
-    const json = await res.json();
-    return Array.isArray(json) ? json : localScores;
-  } catch(e) { return localScores; }
-}
-
-async function saveScore(name, seconds, lives) {
-  const entry = {
-    name: name.trim().slice(0, 20) || 'Anoniem',
-    time: seconds,
-    lives,
-    date: new Date().toLocaleDateString('nl-NL')
-  };
-
-  // Always save locally first so it shows up instantly
-  localScores.push(entry);
-  localScores.sort((a,b) => a.time - b.time || b.lives - a.lives);
-  localScores = localScores.slice(0, 20);
-
-  if (!SCRIPT_URL) return localScores;
-
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors', // Apps Script needs no-cors
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry)
-    });
-    // After posting, reload from server
-    await new Promise(r => setTimeout(r, 800)); // small delay for script to process
-    return await loadScores();
-  } catch(e) { return localScores; }
-}
-
-async function renderLeaderboard(highlightName) {
-  const el = document.getElementById('lb-list');
-  el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
-  const scores = await loadScores();
-
-  if (!SCRIPT_URL) {
-    el.innerHTML = `<div style="color:#d4a843;text-align:center;padding:0.5rem;font-size:0.8rem;line-height:1.6;">
-      ⚠ Geen server ingesteld.<br>
-      Scores worden alleen lokaal opgeslagen.<br><br>
-      <a href="https://github.com/your-repo#leaderboard-setup" target="_blank"
-         style="color:#80aaff;">Setup instructies →</a>
-    </div>` + (scores.length ? renderRows(scores, highlightName) : '');
-    return;
-  }
-
-  if (!scores.length) {
-    el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
-    return;
-  }
-  el.innerHTML = renderRows(scores, highlightName);
-}
-
-function renderRows(scores, highlightName) {
-  return scores.map((s, i) => {
-    const mine = highlightName && s.name === highlightName;
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-    return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
-      <span class="lb-rank">${medal}</span>
-      <span class="lb-name">${s.name}</span>
-      <span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span>
-    </div>`;
-  }).join('');
-}
-
-function toggleLeaderboard() {
-  const panel = document.getElementById('lb-panel');
-  const visible = panel.style.display === 'block';
-  panel.style.display = visible ? 'none' : 'block';
-  if (!visible) renderLeaderboard(null);
-}
-
-function loadPersonalBest() {} // stub
-
 document.getElementById('submit-score-btn').addEventListener('click', async () => {
   const name = document.getElementById('player-name').value.trim() || 'Anoniem';
-  const btn = document.getElementById('submit-score-btn');
+  const btn  = document.getElementById('submit-score-btn');
   btn.disabled = true;
   btn.textContent = 'Opslaan...';
-  await saveScore(name, Math.round(elapsedSeconds), playerLives);
+  await saveScore(name, elapsedSeconds, playerLives);
   document.getElementById('score-form').style.display = 'none';
   document.getElementById('score-saved').style.display = 'block';
   document.getElementById('lb-panel').style.display = 'block';
   renderLeaderboard(name);
 });
 
-
-
+// =============================================
+// ANIMATE
+// =============================================
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
-
   if (gameRunning) {
     elapsedSeconds = (performance.now() - gameStartTime) / 1000;
     document.getElementById('timer').textContent = `⏱ ${formatTime(elapsedSeconds)}`;
@@ -1183,11 +1147,7 @@ function animate() {
     updateMinotaur(dt);
     checkWin();
     checkShieldProximity();
-
-    // Shield pickup rotation
     shieldGroup.rotation.y += dt * 1.2;
-
-    // Sword animation
     if (swordSwinging) {
       swordSwingAngle = Math.min(swordSwingAngle + dt * 15, 1.2);
     } else {
@@ -1196,18 +1156,11 @@ function animate() {
     swordGroup.rotation.x = -swordSwingAngle * 0.8;
     swordGroup.rotation.z = swordSwingAngle * 0.3;
     attackCooldown = Math.max(0, attackCooldown - dt);
-
-    // Shield screen
     shieldScreenGroup.visible = hasShield;
-
     if (minimapVisible) drawMinimap();
   }
-
-  // Main render
   renderer.autoClear = true;
   renderer.render(scene, camera);
-
-  // Sword overlay (on top)
   renderer.autoClear = false;
   renderer.clearDepth();
   renderer.render(swordScene, swordCamera);
