@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Theseus vs Minotaur</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Georgia', serif; }
+    canvas { display: block; }
+
+    #ui {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+
+    /* ---- MENU ---- */
+    #menu {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, #1a0a00 0%, #000 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100; pointer-events: all;
+    }
+    #menu h1 {
+      font-size: 3.5rem; color: #d4a843;
+      text-shadow: 0 0 30px #d4a84388, 2px 2px 0 #4a2000;
+      letter-spacing: 4px; margin-bottom: 0.3rem;
+    }
+    #menu .subtitle {
+      font-size: 1.2rem; color: #b06030;
+      letter-spacing: 2px; margin-bottom: 3rem;
+    }
+    .menu-btn {
+      background: linear-gradient(135deg, #8B2500, #3a0e00);
+      border: 2px solid #d4a843; color: #f5d090;
+      font-family: 'Georgia', serif; font-size: 1.3rem;
+      padding: 0.8rem 3rem; margin: 0.5rem;
+      cursor: pointer; letter-spacing: 2px;
+      transition: all 0.2s; border-radius: 3px;
+      text-shadow: 1px 1px 2px #000;
+      pointer-events: all;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(135deg, #c03000, #6a1e00);
+      box-shadow: 0 0 20px #d4a84366; transform: scale(1.04);
+    }
+    .controls-hint {
+      margin-top: 2rem; color: #8a6030; font-size: 0.85rem;
+      letter-spacing: 1px; text-align: center; line-height: 1.8;
+    }
+
+    /* ---- HUD ---- */
+    #hud { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; }
+
+    #hearts {
+      position: fixed; top: 18px; left: 18px;
+      display: flex; gap: 8px;
+    }
+    .heart {
+      width: 32px; height: 32px;
+      font-size: 26px; line-height: 32px;
+      filter: drop-shadow(0 0 6px #ff4444);
+    }
+
+    #shield-status {
+      position: fixed; top: 18px; right: 18px;
+      color: #d4a843; font-size: 1rem;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 14px; border: 1px solid #8a6030;
+      border-radius: 3px; display: none;
+      letter-spacing: 1px;
+    }
+
+    #controls-bar {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      text-align: center; padding: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #b08050; font-size: 0.82rem; letter-spacing: 1px;
+      border-top: 1px solid #3a2000;
+    }
+
+    #message {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #d4a843; font-size: 1.6rem;
+      text-align: center; text-shadow: 0 0 20px #d4a843aa;
+      background: rgba(0,0,0,0.8); padding: 20px 40px;
+      border: 2px solid #d4a843; border-radius: 4px;
+      display: none; max-width: 480px; line-height: 1.5;
+      pointer-events: none;
+    }
+
+    /* ---- CROSSHAIR ---- */
+    #crosshair {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px; height: 20px; pointer-events: none;
+    }
+    #crosshair::before, #crosshair::after {
+      content: ''; position: absolute;
+      background: rgba(255,255,255,0.8);
+    }
+    #crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
+    #crosshair::after  { width: 20px; height: 2px; top: 9px; left: 0; }
+
+    /* ---- MINIMAP ---- */
+    #minimap {
+      position: fixed; top: 18px; left: 50%;
+      transform: translateX(-50%);
+      display: none;
+    }
+    #minimap canvas {
+      border: 2px solid #d4a843;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.85);
+    }
+
+    /* ---- DAMAGE FLASH ---- */
+    #damage-flash {
+      position: fixed; inset: 0;
+      background: rgba(200,0,0,0.35);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    /* ---- ATTACK FLASH ---- */
+    #attack-flash {
+      position: fixed; inset: 0;
+      background: rgba(255,220,100,0.12);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    #win-overlay, #lose-overlay {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 200; pointer-events: all;
+    }
+    #win-overlay  { background: radial-gradient(ellipse, #0a2a10 0%, #000 100%); }
+    #lose-overlay { background: radial-gradient(ellipse, #2a0000 0%, #000 100%); }
+    #win-overlay h2  { font-size: 4rem; color: #80ff80; text-shadow: 0 0 40px #00ff0066; margin-bottom: 1rem; }
+    #lose-overlay h2 { font-size: 4rem; color: #ff4040; text-shadow: 0 0 40px #ff000066; margin-bottom: 1rem; }
+    #win-overlay p, #lose-overlay p { color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu">
+  <h1>⚔ THESEUS ⚔</h1>
+  <div class="subtitle">Dood de Minotaur!</div>
+  <button class="menu-btn" id="startBtn">Start Game</button>
+  <button class="menu-btn" onclick="window.close()">Quit</button>
+  <div class="controls-hint">
+    WASD — Lopen &nbsp;|&nbsp; Muis — Kijken &nbsp;|&nbsp; Klik — Aanvallen<br>
+    R — Schild oppakken &nbsp;|&nbsp; T — Kaart aan/uit &nbsp;|&nbsp; ESC — Menu
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="win-overlay">
+  <h2>🏆 OVERWINNING!</h2>
+  <p>Je hebt de Minotaur verslagen en ontsnapte uit het labyrint!</p>
+  <button class="menu-btn" onclick="location.reload()">Opnieuw spelen</button>
+</div>
+
+<!-- LOSE -->
+<div id="lose-overlay">
+  <h2>💀 GAME OVER</h2>
+  <p>De Minotaur heeft je overwonnen...</p>
+  <button class="menu-btn" onclick="location.reload()">Probeer opnieuw</button>
+</div>
+
+<!-- HUD -->
+<div id="hearts"></div>
+<div id="shield-status">🛡 Schild Uitgerust</div>
+<div id="controls-bar">
+  [WASD] Lopen &nbsp;|&nbsp; [Muis links] Aanvallen &nbsp;|&nbsp; [R] Schild oppakken &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu
+</div>
+<div id="crosshair"></div>
+<div id="message"></div>
+<div id="minimap"><canvas id="mapCanvas" width="200" height="200"></canvas></div>
+<div id="damage-flash"></div>
+<div id="attack-flash"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// =============================================
+// MAZE DATA (original 29x41 expanded 3x)
+// =============================================
+const originalMaze = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+[1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
+[1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
+[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
+[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1],
+[1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
+[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1],
+[1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
+[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+// Expand 3x
+const expandedMaze = [];
+for (const row of originalMaze) {
+  const wideRow = [];
+  for (const c of row) wideRow.push(c, c, c);
+  for (let i = 0; i < 3; i++) expandedMaze.push([...wideRow]);
+}
+const MAZE_W = expandedMaze[0].length;
+const MAZE_D = expandedMaze.length;
+
+// =============================================
+// THREE.JS SETUP
+// =============================================
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+scene.fog = new THREE.FogExp2(0x000000, 0.055);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 120);
+
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// =============================================
+// TEXTURES (procedural)
+// =============================================
+function makeTexture(drawFn, size = 128) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  drawFn(c.getContext('2d'), size);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+const wallTex = makeTexture((ctx, s) => {
+  ctx.fillStyle = '#4a3a2a';
+  ctx.fillRect(0, 0, s, s);
+  for (let y = 0; y < s; y += 16) {
+    const shift = (Math.floor(y / 16) % 2) * 24;
+    for (let x = -shift; x < s + 24; x += 48) {
+      ctx.fillStyle = `rgba(0,0,0,${0.15 + Math.random() * 0.1})`;
+      ctx.fillRect(x + 1, y + 1, 46, 14);
+      ctx.fillStyle = `rgba(80,60,40,${Math.random() * 0.3})`;
+      ctx.fillRect(x + 2, y + 2, 44, 12);
+    }
+  }
+});
+
+const floorTex = makeTexture((ctx, s) => {
+  ctx.fillStyle = '#2a2018';
+  ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 200; i++) {
+    ctx.fillStyle = `rgba(${80 + Math.random() * 40},${60 + Math.random() * 30},30,0.4)`;
+    const x = Math.random() * s, y = Math.random() * s;
+    ctx.fillRect(x, y, 2 + Math.random() * 6, 2 + Math.random() * 6);
+  }
+  // Grid lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+  for (let i = 0; i < s; i += 16) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+  }
+});
+
+wallTex.repeat.set(0.5, 0.5);
+floorTex.repeat.set(0.25, 0.25);
+
+// =============================================
+// WORLD BUILDING
+// =============================================
+const wallMat = new THREE.MeshLambertMaterial({ map: wallTex });
+const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
+
+// Floor
+const floorGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(MAZE_W / 2, 0, MAZE_D / 2);
+scene.add(floor);
+
+// Ceiling
+const ceilGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
+const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshLambertMaterial({ color: 0x111008 }));
+ceil.rotation.x = Math.PI / 2;
+ceil.position.set(MAZE_W / 2, 5, MAZE_D / 2);
+scene.add(ceil);
+
+// Walls (merged by rows for performance)
+const wallBoxes = [];
+for (let z = 0; z < MAZE_D; z++) {
+  let x = 0;
+  while (x < MAZE_W) {
+    if (expandedMaze[z][x] === 1) {
+      const start = x;
+      while (x < MAZE_W && expandedMaze[z][x] === 1) x++;
+      const length = x - start;
+      const geo = new THREE.BoxGeometry(length, 5, 1);
+      const mesh = new THREE.Mesh(geo, wallMat);
+      mesh.position.set(start + length / 2, 2.5, z + 0.5);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      wallBoxes.push({ minX: start, maxX: start + length, minZ: z, maxZ: z + 1 });
+    } else { x++; }
+  }
+}
+
+// Ambient + torches
+const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
+scene.add(ambient);
+
+function addTorch(x, y, z) {
+  const light = new THREE.PointLight(0xff6010, 2, 10);
+  light.position.set(x, y, z);
+  scene.add(light);
+  // Flame flicker
+  const flickerFn = () => {
+    light.intensity = 1.5 + Math.random() * 1.2;
+    setTimeout(flickerFn, 100 + Math.random() * 200);
+  };
+  flickerFn();
+}
+
+// Place torches every ~20 units
+for (let z = 5; z < MAZE_D - 5; z += 20) {
+  for (let x = 5; x < MAZE_W - 5; x += 20) {
+    if (expandedMaze[z][x] === 0) addTorch(x, 4, z);
+  }
+}
+
+// =============================================
+// PLAYER
+// =============================================
+const playerHeight = 1.7;
+const playerRadius = 0.35;
+let playerPos = new THREE.Vector3(4.5, playerHeight, 4.5);
+let playerYaw = 0, playerPitch = 0;
+let playerVelY = 0;
+let playerLives = 3;
+let hasShield = false;
+let shieldPickedUp = false;
+let isAttacking = false;
+let attackCooldown = 0;
+let invincibleTimer = 0; // brief invincibility after hit
+
+camera.position.copy(playerPos);
+
+// Keys
+const keys = {};
+document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keyup',   e => keys[e.code] = false);
+
+// Mouse look (pointer lock)
+let locked = false;
+document.addEventListener('click', () => {
+  if (gameRunning && !locked) renderer.domElement.requestPointerLock();
+});
+document.addEventListener('pointerlockchange', () => {
+  locked = document.pointerLockElement === renderer.domElement;
+});
+document.addEventListener('mousemove', e => {
+  if (!locked) return;
+  playerYaw   -= e.movementX * 0.002;
+  playerPitch -= e.movementY * 0.002;
+  playerPitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, playerPitch));
+});
+
+// =============================================
+// COLLISION
+// =============================================
+function isWall(x, z) {
+  const gx = Math.floor(x), gz = Math.floor(z);
+  if (gx < 0 || gx >= MAZE_W || gz < 0 || gz >= MAZE_D) return true;
+  return expandedMaze[gz][gx] === 1;
+}
+
+function playerCanMove(nx, nz) {
+  const r = playerRadius;
+  return !isWall(nx - r, nz - r) && !isWall(nx + r, nz - r) &&
+         !isWall(nx - r, nz + r) && !isWall(nx + r, nz + r);
+}
+
+// =============================================
+// MINOTAUR
+// =============================================
+const minotaurGroup = new THREE.Group();
+minotaurGroup.position.set(61.5, 0, 61.5);
+scene.add(minotaurGroup);
+
+function makeColor(r, g, b) { return new THREE.MeshLambertMaterial({ color: new THREE.Color(r/255, g/255, b/255) }); }
+const skinMat = makeColor(70, 60, 55);
+const furMat  = makeColor(30, 25, 20);
+const hornMat = makeColor(150, 140, 130);
+const blackMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+const redMat   = new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 });
+
+function addBox(parent, w, h, d, px, py, pz, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(px, py, pz); parent.add(m); return m;
+}
+function addSphere(parent, r, px, py, pz, mat) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), mat);
+  m.position.set(px, py, pz); parent.add(m); return m;
+}
+
+// Torso
+addBox(minotaurGroup, 1.2, 2, 0.8,   0, 2, 0,   skinMat);
+// Chest detail
+for (let i = 0; i < 8; i++) {
+  addBox(minotaurGroup, 0.25, 0.12, 0.15,
+    (Math.random()-0.5), 1.5 + i*0.05, 0.35, skinMat);
+}
+// Head root
+const headGroup = new THREE.Group();
+headGroup.position.set(0, 3.5, 0.3);
+minotaurGroup.add(headGroup);
+addBox(headGroup, 0.9, 0.7, 1.2, 0, 0, 0, furMat);
+addBox(headGroup, 0.6, 0.4, 0.8, 0, -0.2, 0.5, furMat);
+addSphere(headGroup, 0.08, -0.15, -0.25, 0.9, blackMat);
+addSphere(headGroup, 0.08,  0.15, -0.25, 0.9, blackMat);
+// Eyes
+const eyeL = addSphere(headGroup, 0.1, -0.25, 0.15, 0.7, redMat);
+const eyeR = addSphere(headGroup, 0.1,  0.25, 0.15, 0.7, redMat);
+// Horns
+for (const side of [-1, 1]) {
+  for (let i = 0; i < 8; i++) {
+    addSphere(headGroup, Math.max(0.04, 0.18 - i*0.015),
+      0.4*side + i*0.07*side, 0.3 + i*0.1, -i*0.04, hornMat);
+  }
+}
+// Arms
+for (const side of [-1, 1]) {
+  addSphere(minotaurGroup, 0.25, 0.85*side, 2.8, 0, skinMat);
+  for (let i = 0; i < 6; i++) {
+    addBox(minotaurGroup, 0.3, 0.22, 0.3,
+      0.85*side, 2.6 - i*0.28, 0, skinMat);
+  }
+  addBox(minotaurGroup, 0.4, 0.3, 0.3, 0.85*side, -0.2, 0.3, skinMat);
+}
+// Legs
+for (const side of [-1, 1]) {
+  addSphere(minotaurGroup, 0.25, 0.5*side, 0.8, 0, furMat);
+  for (let i = 0; i < 5; i++) {
+    addBox(minotaurGroup, 0.42, 0.2, 0.45, 0.5*side, 0.7 - i*0.14, 0, furMat);
+  }
+  for (let i = 0; i < 4; i++) {
+    addBox(minotaurGroup, 0.35, 0.17, 0.32, 0.5*side, 0.1 - i*0.02, -0.1 - i*0.09, furMat);
+  }
+  addBox(minotaurGroup, 0.5, 0.22, 0.65, 0.5*side, -0.4, -0.5, blackMat);
+}
+// Tail
+for (let i = 0; i < 6; i++) {
+  addBox(minotaurGroup, 0.12, 0.12, 0.18, 0, 1.5 - i*0.15, -0.5 - i*0.1, furMat);
+}
+
+let minotaurHealth = 5;
+let minotaurDead = false;
+let minotaurState = 'patrol';
+let minotaurPatrolTarget = new THREE.Vector3(30, 0, 30);
+let minotaurAttackCooldown = 0;
+const MINOTAUR_CHASE_SPEED = 2.8;
+const MINOTAUR_PATROL_SPEED = 1.0;
+const DETECTION_RANGE = 16;
+const ATTACK_RANGE = 2.5;
+
+// Bobbing animation
+let minotaurBobTime = 0;
+
+// =============================================
+// SHIELD PICKUP
+// =============================================
+const shieldGroup = new THREE.Group();
+shieldGroup.position.set(70, 1, 70);
+scene.add(shieldGroup);
+
+const shieldMat = new THREE.MeshLambertMaterial({ color: 0xb07030 });
+const shieldRim = new THREE.MeshLambertMaterial({ color: 0x8a5020 });
+// Main disc
+const shieldMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.12, 16), shieldMat);
+shieldMesh.rotation.x = Math.PI/2;
+shieldGroup.add(shieldMesh);
+// Center boss
+const boss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), shieldRim);
+shieldGroup.add(boss);
+// Rings
+for (const r of [0.45, 0.68]) {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.04, 6, 16), shieldRim);
+  ring.rotation.x = Math.PI/2;
+  shieldGroup.add(ring);
+}
+let shieldRotY = 0;
+
+// =============================================
+// SWORD (screen-space)
+// =============================================
+const swordCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10);
+const swordScene = new THREE.Scene();
+const swordGroup = new THREE.Group();
+swordGroup.position.set(0.35, -0.25, -0.5);
+swordScene.add(swordGroup);
+
+const silverMat = new THREE.MeshLambertMaterial({ color: 0xc8d0d8, emissive: 0x102030, emissiveIntensity: 0.3 });
+const bronzeMat = new THREE.MeshLambertMaterial({ color: 0xb87333 });
+const brownMat  = new THREE.MeshLambertMaterial({ color: 0x6b3a1f });
+const darkMat   = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+
+// Blade
+for (let i = 0; i < 6; i++) {
+  const bm = new THREE.Mesh(new THREE.BoxGeometry(0.06 - i*0.008, 0.1, 0.02), silverMat);
+  bm.position.set(0, i*0.1, 0); swordGroup.add(bm);
+}
+// Tip
+const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 4), silverMat);
+tip.position.set(0, 0.64, 0); swordGroup.add(tip);
+// Crossguard
+const cg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.04, 0.04), bronzeMat);
+cg.position.set(0, -0.05, 0); swordGroup.add(cg);
+// Handle
+for (let i = 0; i < 4; i++) {
+  const hm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.05), brownMat);
+  hm.position.set(0, -0.12 - i*0.06, 0); swordGroup.add(hm);
+}
+// Pommel
+const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), bronzeMat);
+pommel.position.set(0, -0.38, 0); swordGroup.add(pommel);
+
+// Sword light
+const swordLight = new THREE.AmbientLight(0xffffff, 2);
+swordScene.add(swordLight);
+
+let swordSwingAngle = 0;
+let swordSwinging = false;
+
+window.addEventListener('resize', () => {
+  swordCamera.aspect = window.innerWidth / window.innerHeight;
+  swordCamera.updateProjectionMatrix();
+});
+
+// =============================================
+// ARIADNE THREAD (breadcrumb trail)
+// =============================================
+const threadPoints = [];
+let threadTimer = 0;
+let lastThreadPos = new THREE.Vector3(4.5, 0, 4.5);
+const threadMat = new THREE.MeshBasicMaterial({ color: 0xff2020 });
+
+function addThreadPoint(pos) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), threadMat);
+  m.position.copy(pos).setY(0.15);
+  scene.add(m);
+  threadPoints.push(m);
+  if (threadPoints.length > 200) {
+    scene.remove(threadPoints.shift());
+  }
+}
+
+// =============================================
+// MINIMAP
+// =============================================
+const mapCanvas = document.getElementById('mapCanvas');
+const mapCtx = mapCanvas.getContext('2d');
+let minimapVisible = false;
+
+function drawMinimap() {
+  const W = mapCanvas.width, H = mapCanvas.height;
+  mapCtx.clearRect(0, 0, W, H);
+  mapCtx.fillStyle = 'rgba(0,0,0,0.85)';
+  mapCtx.fillRect(0, 0, W, H);
+
+  const cellW = W / MAZE_W, cellH = H / MAZE_D;
+  // Walls
+  mapCtx.fillStyle = '#555';
+  for (let z = 0; z < MAZE_D; z += 3) {
+    for (let x = 0; x < MAZE_W; x += 3) {
+      if (expandedMaze[z][x] === 1) {
+        mapCtx.fillRect(x * cellW, z * cellH, cellW * 3, cellH * 3);
+      }
+    }
+  }
+  // Thread
+  mapCtx.fillStyle = 'rgba(200,0,0,0.6)';
+  for (const tp of threadPoints) {
+    mapCtx.fillRect(tp.position.x * cellW - 1, tp.position.z * cellH - 1, 2, 2);
+  }
+  // Shield
+  if (!shieldPickedUp) {
+    mapCtx.fillStyle = '#ffff00';
+    mapCtx.beginPath();
+    mapCtx.arc(shieldGroup.position.x * cellW, shieldGroup.position.z * cellH, 3, 0, Math.PI*2);
+    mapCtx.fill();
+  }
+  // Minotaur
+  mapCtx.fillStyle = minotaurDead ? '#888' : '#ff2020';
+  mapCtx.beginPath();
+  mapCtx.arc(minotaurGroup.position.x * cellW, minotaurGroup.position.z * cellH, 4, 0, Math.PI*2);
+  mapCtx.fill();
+  // Player
+  mapCtx.fillStyle = '#00ff80';
+  const px = playerPos.x * cellW, pz = playerPos.z * cellH;
+  mapCtx.save();
+  mapCtx.translate(px, pz);
+  mapCtx.rotate(-playerYaw);
+  mapCtx.beginPath();
+  mapCtx.moveTo(0, -5); mapCtx.lineTo(3, 4); mapCtx.lineTo(-3, 4);
+  mapCtx.closePath(); mapCtx.fill();
+  mapCtx.restore();
+}
+
+// =============================================
+// HUD
+// =============================================
+function updateHearts() {
+  const c = document.getElementById('hearts');
+  c.innerHTML = '';
+  for (let i = 0; i < playerLives; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart'; h.textContent = '❤';
+    c.appendChild(h);
+  }
+}
+
+function showMessage(txt, duration = 3000) {
+  const el = document.getElementById('message');
+  el.textContent = txt; el.style.display = 'block';
+  if (duration > 0) setTimeout(() => el.style.display = 'none', duration);
+}
+
+function flashDamage() {
+  const el = document.getElementById('damage-flash');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 150);
+}
+
+function flashAttack() {
+  const el = document.getElementById('attack-flash');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 200);
+}
+
+// =============================================
+// GAME STATE
+// =============================================
+let gameRunning = false;
+let gameOver = false;
+let gameWon = false;
+let clock = new THREE.Clock();
+
+function startGame() {
+  document.getElementById('menu').style.display = 'none';
+  gameRunning = true; gameOver = false; gameWon = false;
+  playerLives = 3; hasShield = false; shieldPickedUp = false;
+  isAttacking = false; attackCooldown = 0; invincibleTimer = 0;
+  document.getElementById('shield-status').style.display = 'none';
+  playerPos.set(4.5, playerHeight, 4.5);
+  playerYaw = 0; playerPitch = 0;
+  minotaurHealth = 5; minotaurDead = false;
+  minotaurGroup.position.set(61.5, 0, 61.5);
+  minotaurGroup.visible = true;
+  minotaurState = 'patrol';
+  for (const tp of threadPoints) scene.remove(tp);
+  threadPoints.length = 0;
+  updateHearts();
+  renderer.domElement.requestPointerLock();
+  document.getElementById('controls-bar').textContent =
+    '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+document.addEventListener('keydown', e => {
+  if (!gameRunning) return;
+  if (e.code === 'KeyT') {
+    minimapVisible = !minimapVisible;
+    document.getElementById('minimap').style.display = minimapVisible ? 'block' : 'none';
+  }
+  if (e.code === 'KeyR') {
+    if (!shieldPickedUp) {
+      const d = playerPos.distanceTo(shieldGroup.position);
+      if (d < 4) {
+        shieldPickedUp = true; hasShield = true;
+        shieldGroup.visible = false;
+        document.getElementById('shield-status').style.display = 'block';
+        showMessage('🛡 Schild uitgerust! Extra bescherming!');
+        document.getElementById('controls-bar').textContent =
+          'Schild uitgerust! [R] Schild neerleggen | [WASD] Lopen | [Klik] Aanvallen';
+      } else {
+        showMessage('Kom dichter bij het schild!', 1500);
+      }
+    } else {
+      hasShield = false; shieldPickedUp = false;
+      shieldGroup.position.set(playerPos.x + 1, 1, playerPos.z);
+      shieldGroup.visible = true;
+      document.getElementById('shield-status').style.display = 'none';
+      document.getElementById('controls-bar').textContent =
+        '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
+    }
+  }
+  if (e.code === 'Escape') {
+    document.exitPointerLock();
+    gameRunning = false;
+    document.getElementById('menu').style.display = 'flex';
+  }
+});
+
+document.addEventListener('mousedown', e => {
+  if (!gameRunning || !locked) return;
+  if (e.button === 0) doAttack();
+});
+
+function doAttack() {
+  if (isAttacking || attackCooldown > 0) return;
+  isAttacking = true;
+  attackCooldown = 0.5;
+  swordSwinging = true;
+  flashAttack();
+
+  // Check hit
+  if (!minotaurDead) {
+    const toMinotaur = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
+    const forward = new THREE.Vector3(-Math.sin(playerYaw), 0, -Math.cos(playerYaw));
+    const dot = forward.dot(toMinotaur);
+    const dist = playerPos.distanceTo(minotaurGroup.position);
+
+    if (dist < 4 && dot > 0.55) {
+      minotaurHealth -= 1;
+      showMessage(`Raak! Minotaur leven: ${minotaurHealth}/5`, 1200);
+
+      // Knockback
+      const kbDir = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
+      minotaurGroup.position.addScaledVector(kbDir, 2);
+
+      if (minotaurHealth <= 0) {
+        minotaurDead = true;
+        minotaurGroup.visible = false;
+        showMessage('Minotaur verslagen! Keer terug naar het begin om te WINNEN!', 5000);
+        document.getElementById('controls-bar').textContent =
+          'Minotaur verslagen! Keer terug naar het startpunt (links boven in de kaart)!';
+      }
+    }
+  }
+  setTimeout(() => { isAttacking = false; swordSwinging = false; }, 300);
+}
+
+// =============================================
+// MINOTAUR AI
+// =============================================
+function minotaurCanMoveTo(pos) {
+  const gx = Math.floor(pos.x), gz = Math.floor(pos.z);
+  if (gx < 0 || gx >= MAZE_W || gz < 0 || gz >= MAZE_D) return false;
+  return expandedMaze[gz][gx] === 0;
+}
+
+function updateMinotaur(dt) {
+  if (minotaurDead) return;
+
+  const toPlayer = new THREE.Vector3().subVectors(playerPos, minotaurGroup.position);
+  toPlayer.y = 0;
+  const dist = toPlayer.length();
+
+  if (dist < DETECTION_RANGE) minotaurState = 'chase';
+  else if (dist > DETECTION_RANGE * 1.5) minotaurState = 'patrol';
+
+  minotaurBobTime += dt * 3;
+  minotaurGroup.position.y = Math.sin(minotaurBobTime) * 0.1;
+  // Eye glow pulsing
+  const glow = 0.6 + Math.sin(minotaurBobTime * 2) * 0.4;
+  redMat.emissiveIntensity = glow;
+
+  if (minotaurState === 'chase') {
+    const dir = toPlayer.clone().normalize();
+    const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_CHASE_SPEED * dt);
+    newPos.y = 0;
+    if (minotaurCanMoveTo(newPos)) {
+      minotaurGroup.position.copy(newPos);
+    }
+    minotaurGroup.lookAt(new THREE.Vector3(playerPos.x, minotaurGroup.position.y, playerPos.z));
+
+    // Attack
+    if (dist < ATTACK_RANGE && minotaurAttackCooldown <= 0) {
+      minotaurAttack();
+    }
+  } else {
+    // Patrol
+    const toDest = new THREE.Vector3().subVectors(minotaurPatrolTarget, minotaurGroup.position);
+    toDest.y = 0;
+    if (toDest.length() < 2) {
+      // New target
+      minotaurPatrolTarget.set(
+        10 + Math.random() * (MAZE_W - 20),
+        0,
+        10 + Math.random() * (MAZE_D - 20)
+      );
+    } else {
+      const dir = toDest.normalize();
+      const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_PATROL_SPEED * dt);
+      newPos.y = 0;
+      if (minotaurCanMoveTo(newPos)) {
+        minotaurGroup.position.copy(newPos);
+        minotaurGroup.lookAt(new THREE.Vector3(minotaurPatrolTarget.x, minotaurGroup.position.y, minotaurPatrolTarget.z));
+      } else {
+        minotaurPatrolTarget.set(
+          10 + Math.random() * (MAZE_W - 20), 0,
+          10 + Math.random() * (MAZE_D - 20)
+        );
+      }
+    }
+  }
+
+  if (minotaurAttackCooldown > 0) minotaurAttackCooldown -= dt;
+}
+
+function minotaurAttack() {
+  if (gameOver || invincibleTimer > 0) return;
+  minotaurAttackCooldown = 2.0;
+  invincibleTimer = 1.5;
+
+  if (hasShield && Math.random() < 0.5) {
+    showMessage('🛡 Schild geblokkeerd!', 1000);
+    return;
+  }
+  playerLives--;
+  updateHearts();
+  flashDamage();
+  showMessage(playerLives > 0 ? `Geraakt! Leven: ${playerLives}` : '', 1000);
+  if (playerLives <= 0) {
+    gameOver = true; gameRunning = false;
+    document.exitPointerLock();
+    document.getElementById('lose-overlay').style.display = 'flex';
+  }
+}
+
+// =============================================
+// PLAYER MOVEMENT
+// =============================================
+function updatePlayer(dt) {
+  // Direction vectors
+  const sinY = Math.sin(playerYaw), cosY = Math.cos(playerYaw);
+  const forward = new THREE.Vector3(-sinY, 0, -cosY);
+  const right   = new THREE.Vector3(cosY, 0, -sinY);
+
+  const moveSpeed = 5;
+  let move = new THREE.Vector3();
+  if (keys['KeyW'] || keys['ArrowUp'])    move.addScaledVector(forward, 1);
+  if (keys['KeyS'] || keys['ArrowDown'])  move.addScaledVector(forward, -1);
+  if (keys['KeyA'] || keys['ArrowLeft'])  move.addScaledVector(right, -1);
+  if (keys['KeyD'] || keys['ArrowRight']) move.addScaledVector(right, 1);
+
+  if (move.length() > 0) move.normalize();
+
+  let nx = playerPos.x + move.x * moveSpeed * dt;
+  let nz = playerPos.z + move.z * moveSpeed * dt;
+
+  if (playerCanMove(nx, playerPos.z)) playerPos.x = nx;
+  if (playerCanMove(playerPos.x, nz)) playerPos.z = nz;
+
+  // Camera
+  camera.position.copy(playerPos);
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = playerYaw;
+  camera.rotation.x = playerPitch;
+
+  // Invincibility timer
+  if (invincibleTimer > 0) invincibleTimer -= dt;
+
+  // Thread
+  threadTimer += dt;
+  if (playerPos.distanceTo(lastThreadPos) > 0.6 && threadTimer > 0.3) {
+    addThreadPoint(playerPos);
+    lastThreadPos.copy(playerPos);
+    threadTimer = 0;
+  }
+}
+
+// =============================================
+// SHIELD VISUAL (on screen)
+// =============================================
+const shieldScreenGroup = new THREE.Group();
+shieldScreenGroup.position.set(-0.28, -0.22, -0.5);
+shieldScreenGroup.visible = false;
+
+const shieldScreenMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 12), shieldMat.clone());
+shieldScreenMesh.rotation.x = Math.PI/2;
+shieldScreenGroup.add(shieldScreenMesh);
+swordScene.add(shieldScreenGroup);
+
+// =============================================
+// WIN CHECK
+// =============================================
+function checkWin() {
+  if (minotaurDead && playerPos.distanceTo(new THREE.Vector3(4.5, playerHeight, 4.5)) < 6) {
+    gameRunning = false; gameWon = true;
+    document.exitPointerLock();
+    document.getElementById('win-overlay').style.display = 'flex';
+  }
+}
+
+// Shield proximity hint
+function checkShieldProximity() {
+  if (!shieldPickedUp) {
+    const d = playerPos.distanceTo(shieldGroup.position);
+    if (d < 5) {
+      document.getElementById('controls-bar').textContent =
+        `🛡 Schild vlakbij! [R] om op te pakken (afstand: ${d.toFixed(1)}m)`;
+    }
+  }
+}
+
+// =============================================
+// RENDER LOOP
+// =============================================
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  if (gameRunning) {
+    updatePlayer(dt);
+    updateMinotaur(dt);
+    checkWin();
+    checkShieldProximity();
+
+    // Shield pickup rotation
+    shieldGroup.rotation.y += dt * 1.2;
+
+    // Sword animation
+    if (swordSwinging) {
+      swordSwingAngle = Math.min(swordSwingAngle + dt * 15, 1.2);
+    } else {
+      swordSwingAngle = Math.max(swordSwingAngle - dt * 8, 0);
+    }
+    swordGroup.rotation.x = -swordSwingAngle * 0.8;
+    swordGroup.rotation.z = swordSwingAngle * 0.3;
+    attackCooldown = Math.max(0, attackCooldown - dt);
+
+    // Shield screen
+    shieldScreenGroup.visible = hasShield;
+
+    if (minimapVisible) drawMinimap();
+  }
+
+  // Main render
+  renderer.autoClear = true;
+  renderer.render(scene, camera);
+
+  // Sword overlay (on top)
+  renderer.autoClear = false;
+  renderer.clearDepth();
+  renderer.render(swordScene, swordCamera);
+}
+
+animate();
+</script>
+</body>
+</html>
