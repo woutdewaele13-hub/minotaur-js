@@ -132,7 +132,20 @@
       transition: opacity 0.15s;
     }
 
-    #win-overlay, #lose-overlay {
+    #timer {
+      position: fixed; top: 18px; left: 50%;
+      transform: translateX(-50%);
+      color: #d4a843; font-size: 1.1rem;
+      background: rgba(0,0,0,0.6);
+      padding: 5px 16px; border: 1px solid #8a6030;
+      border-radius: 3px; display: none;
+      font-family: 'Georgia', serif; letter-spacing: 2px;
+    }
+    #lb-list .lb-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #3a2000; }
+    #lb-list .lb-rank { color:#d4a843; width:28px; }
+    #lb-list .lb-name { flex:1; }
+    #lb-list .lb-score { color:#80ff80; }
+    #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
       position: fixed; inset: 0;
       display: none; flex-direction: column;
       align-items: center; justify-content: center;
@@ -162,7 +175,15 @@
 <!-- WIN -->
 <div id="win-overlay">
   <h2>🏆 OVERWINNING!</h2>
-  <p>Je hebt de Minotaur verslagen en ontsnapte uit het labyrint!</p>
+  <p id="win-time-text">Je hebt de Minotaur verslagen!</p>
+  <div id="score-form" style="margin:1rem 0;">
+    <input id="player-name" type="text" maxlength="20" placeholder="Jouw naam..."
+      style="font-family:Georgia,serif;font-size:1.1rem;padding:0.5rem 1rem;background:#1a0800;
+             border:2px solid #d4a843;color:#f5d090;border-radius:3px;margin-bottom:0.5rem;width:220px;"/>
+    <br>
+    <button class="menu-btn" id="submit-score-btn">Score opslaan</button>
+  </div>
+  <div id="score-saved" style="display:none;color:#80ff80;margin-bottom:1rem;font-size:1rem;">✓ Score opgeslagen!</div>
   <button class="menu-btn" onclick="location.reload()">Opnieuw spelen</button>
 </div>
 
@@ -173,7 +194,27 @@
   <button class="menu-btn" onclick="location.reload()">Probeer opnieuw</button>
 </div>
 
+<!-- LEADERBOARD BUTTON (always visible during game) -->
+<div id="lb-btn" onclick="toggleLeaderboard()"
+  style="position:fixed;top:18px;right:18px;background:rgba(0,0,0,0.7);
+         border:1px solid #d4a843;color:#d4a843;padding:6px 14px;
+         cursor:pointer;font-family:Georgia,serif;font-size:0.9rem;
+         border-radius:3px;z-index:50;display:none;letter-spacing:1px;">
+  🏆 Highscores
+</div>
+
+<!-- LEADERBOARD PANEL -->
+<div id="lb-panel"
+  style="position:fixed;top:60px;right:18px;width:280px;
+         background:rgba(10,5,0,0.95);border:2px solid #d4a843;
+         border-radius:4px;padding:1rem;z-index:60;display:none;
+         font-family:Georgia,serif;color:#f5d090;max-height:400px;overflow-y:auto;">
+  <h3 style="color:#d4a843;text-align:center;margin-bottom:0.8rem;letter-spacing:2px;">🏆 HIGHSCORES</h3>
+  <div id="lb-list" style="font-size:0.9rem;line-height:2;">Laden...</div>
+</div>
+
 <!-- HUD -->
+<div id="timer">⏱ 0:00</div>
 <div id="hearts"></div>
 <div id="shield-status">🛡 Schild Uitgerust</div>
 <div id="controls-bar">
@@ -747,6 +788,17 @@ function startGame() {
   for (const tp of threadPoints) scene.remove(tp);
   threadPoints.length = 0;
   updateHearts();
+  gameStartTime = performance.now();
+  elapsedSeconds = 0;
+  document.getElementById('timer').style.display = 'block';
+  document.getElementById('lb-btn').style.display = 'none';
+  document.getElementById('lb-panel').style.display = 'none';
+  document.getElementById('win-overlay').style.display = 'none';
+  document.getElementById('score-form').style.display = 'block';
+  document.getElementById('score-saved').style.display = 'none';
+  document.getElementById('submit-score-btn').disabled = false;
+  document.getElementById('submit-score-btn').textContent = 'Score opslaan';
+  document.getElementById('player-name').value = '';
   renderer.domElement.requestPointerLock();
   document.getElementById('controls-bar').textContent =
     '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
@@ -976,8 +1028,15 @@ swordScene.add(shieldScreenGroup);
 function checkWin() {
   if (minotaurDead && playerPos.distanceTo(new THREE.Vector3(2, playerHeight, 2)) < 6) {
     gameRunning = false; gameWon = true;
+    elapsedSeconds = (performance.now() - gameStartTime) / 1000;
     document.exitPointerLock();
+    document.getElementById('timer').style.display = 'none';
+    document.getElementById('lb-btn').style.display = 'block';
+    document.getElementById('win-time-text').textContent =
+      `Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
     document.getElementById('win-overlay').style.display = 'flex';
+    // Pre-load leaderboard in background
+    renderLeaderboard(null);
   }
 }
 
@@ -993,13 +1052,89 @@ function checkShieldProximity() {
 }
 
 // =============================================
-// RENDER LOOP
+// TIMER
 // =============================================
+let gameStartTime = 0;
+let elapsedSeconds = 0;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+// =============================================
+// LEADERBOARD (persistent shared storage)
+// =============================================
+const LB_KEY = 'theseus-scores-v1';
+
+async function loadScores() {
+  try {
+    const result = await window.storage.get(LB_KEY, true); // shared=true
+    return result ? JSON.parse(result.value) : [];
+  } catch(e) { return []; }
+}
+
+async function saveScore(name, seconds, lives) {
+  try {
+    const scores = await loadScores();
+    scores.push({ name: name.trim() || 'Anoniem', time: seconds, lives, date: new Date().toLocaleDateString('nl-NL') });
+    // Sort by time ascending (faster = better), then lives descending
+    scores.sort((a,b) => a.time - b.time || b.lives - a.lives);
+    // Keep top 20
+    const trimmed = scores.slice(0, 20);
+    await window.storage.set(LB_KEY, JSON.stringify(trimmed), true);
+    return trimmed;
+  } catch(e) { return []; }
+}
+
+async function renderLeaderboard(highlightName) {
+  const el = document.getElementById('lb-list');
+  el.innerHTML = 'Laden...';
+  const scores = await loadScores();
+  if (scores.length === 0) {
+    el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
+    return;
+  }
+  el.innerHTML = scores.map((s, i) => {
+    const mine = s.name === highlightName;
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+    return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
+      <span class="lb-rank">${medal}</span>
+      <span class="lb-name">${s.name}</span>
+      <span class="lb-score">${formatTime(s.time)} &nbsp;❤${s.lives}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleLeaderboard() {
+  const panel = document.getElementById('lb-panel');
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  if (!visible) renderLeaderboard(null);
+}
+
+// Submit score button
+document.getElementById('submit-score-btn').addEventListener('click', async () => {
+  const name = document.getElementById('player-name').value.trim() || 'Anoniem';
+  document.getElementById('submit-score-btn').disabled = true;
+  document.getElementById('submit-score-btn').textContent = 'Opslaan...';
+  await saveScore(name, Math.round(elapsedSeconds), playerLives);
+  document.getElementById('score-form').style.display = 'none';
+  document.getElementById('score-saved').style.display = 'block';
+  // Show leaderboard
+  document.getElementById('lb-panel').style.display = 'block';
+  renderLeaderboard(name);
+});
+
+
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
 
   if (gameRunning) {
+    elapsedSeconds = (performance.now() - gameStartTime) / 1000;
+    document.getElementById('timer').textContent = `⏱ ${formatTime(elapsedSeconds)}`;
     updatePlayer(dt);
     updateMinotaur(dt);
     checkWin();
