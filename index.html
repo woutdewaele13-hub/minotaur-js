@@ -197,16 +197,18 @@
   </div>
 </div>
 
-<!-- JSONBIN SETUP BANNER -->
+<!-- GOOGLE SHEETS SETUP BANNER -->
 <div id="setup-banner">
-  <strong>📋 Leaderboard Instellen (1 minuut)</strong><br>
-  1. Ga naar <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Maak gratis account<br>
-  2. Klik "Create Bin" → plak <code>[]</code> als inhoud → Save<br>
-  3. Kopieer de <strong>Bin ID</strong> en plak hier:<br>
-  <input id="bin-id-input" placeholder="bijv. 6642abc123def456..." />
-  4. Ga naar API Keys → kopieer je <strong>Master Key</strong> en plak hier:<br>
-  <input id="api-key-input" placeholder="bijv. $2a$10$..." />
-  <button onclick="saveJsonBinConfig()">Opslaan & Verbinden</button>
+  <strong>📋 Online Leaderboard Instellen</strong><br>
+  1. Ga naar <a href="https://script.google.com" target="_blank">script.google.com</a><br>
+  2. Klik <strong>Nieuw project</strong> → plak de meegeleverde code<br>
+  3. Klik <strong>Deploy → New deployment</strong><br>
+  &nbsp;&nbsp; • Type: <strong>Web app</strong><br>
+  &nbsp;&nbsp; • Execute as: <strong>Me</strong><br>
+  &nbsp;&nbsp; • Who has access: <strong>Anyone</strong><br>
+  4. Kopieer de <strong>Web app URL</strong> en plak hier:<br>
+  <input id="script-url-input" placeholder="https://script.google.com/macros/s/..." />
+  <button onclick="saveScriptUrlConfig()">Opslaan & Verbinden</button>
   <button onclick="document.getElementById('setup-banner').style.display='none'" style="background:#333;margin-left:8px;">Sluiten</button>
   <div id="setup-status" style="color:#80ff80;margin-top:4px;"></div>
 </div>
@@ -281,117 +283,117 @@
 <script>
 
 // =============================================
-// LEADERBOARD — JSONBin.io + localStorage fallback
+// LEADERBOARD — Google Apps Script + localStorage fallback
 // =============================================
-// JSONBin config is saved in localStorage so you only set it once.
-// If not configured, scores are saved locally only (still works!).
+// Paste your deployed Google Apps Script URL below.
+// Scores always save locally too, so it works even without a server.
 
-const LS_SCORES_KEY  = 'theseus_scores_v1';
-const LS_BIN_ID_KEY  = 'theseus_jsonbin_id';
-const LS_API_KEY_KEY = 'theseus_jsonbin_apikey';
+const LS_SCORES_KEY  = 'theseus_scores_v2';
+const LS_SCRIPT_KEY  = 'theseus_script_url';
 
-function getConfig() {
-  return {
-    binId:  localStorage.getItem(LS_BIN_ID_KEY)  || '',
-    apiKey: localStorage.getItem(LS_API_KEY_KEY) || ''
-  };
+function getScriptUrl() {
+  return localStorage.getItem(LS_SCRIPT_KEY) || '';
 }
 
-function saveJsonBinConfig() {
-  const binId  = document.getElementById('bin-id-input').value.trim();
-  const apiKey = document.getElementById('api-key-input').value.trim();
-  if (!binId || !apiKey) {
-    document.getElementById('setup-status').textContent = '⚠ Vul beide velden in!';
+function saveScriptUrlConfig() {
+  const url = document.getElementById('script-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    document.getElementById('setup-status').textContent = '⚠ Ongeldige URL. Moet beginnen met https://script.google.com';
     return;
   }
-  localStorage.setItem(LS_BIN_ID_KEY, binId);
-  localStorage.setItem(LS_API_KEY_KEY, apiKey);
+  localStorage.setItem(LS_SCRIPT_KEY, url);
   document.getElementById('setup-status').textContent = '✓ Opgeslagen! Verbinding wordt getest...';
-  testJsonBinConnection(binId, apiKey);
+  testScriptConnection(url);
 }
 
-async function testJsonBinConnection(binId, apiKey) {
+async function testScriptConnection(url) {
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-      headers: { 'X-Master-Key': apiKey }
-    });
+    const res = await fetch(url + '?action=get');
     if (res.ok) {
       document.getElementById('setup-status').textContent = '✓ Verbonden! Leaderboard werkt.';
       setTimeout(() => document.getElementById('setup-banner').style.display = 'none', 2000);
     } else {
-      document.getElementById('setup-status').textContent = '✗ Fout: Controleer je Bin ID en API key.';
+      document.getElementById('setup-status').textContent = '✗ Fout ' + res.status + '. Controleer je URL en deploy-instellingen.';
     }
   } catch(e) {
-    document.getElementById('setup-status').textContent = '✗ Netwerkfout. Probeer opnieuw.';
+    document.getElementById('setup-status').textContent = '✗ Netwerkfout. Controleer de URL.';
   }
 }
 
-// Load scores from JSONBin or localStorage
-async function loadScores() {
-  const { binId, apiKey } = getConfig();
+// FIX: safe formatTime — handles undefined/null/NaN
+function formatTime(s) {
+  const n = Number(s);
+  if (isNaN(n) || n < 0) return '?:??';
+  const m = Math.floor(n / 60);
+  const sec = Math.floor(n % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
 
-  if (binId && apiKey) {
+// Load scores from Google Sheets or localStorage
+async function loadScores() {
+  const url = getScriptUrl();
+  if (url) {
     try {
-      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-        headers: { 'X-Master-Key': apiKey }
-      });
+      const res = await fetch(url);
       if (res.ok) {
-        const data = await res.json();
-        const scores = Array.isArray(data.record) ? data.record : [];
-        // Cache locally
-        localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
-        return scores;
+        const json = await res.json();
+        if (Array.isArray(json)) {
+          // Normalize: ensure time is always a number
+          const scores = json.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
+                             .filter(s => !isNaN(s.time))
+                             .sort((a, b) => a.time - b.time || b.lives - a.lives)
+                             .slice(0, 20);
+          localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
+          return scores;
+        }
       }
     } catch(e) { /* fall through to local */ }
   }
-
   // Local fallback
   try {
-    return JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
+    return raw.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
+              .filter(s => !isNaN(s.time))
+              .sort((a, b) => a.time - b.time || b.lives - a.lives);
   } catch(e) { return []; }
 }
 
 // Save a score
 async function saveScore(name, seconds, lives) {
+  const t = Number(seconds);
+  const l = Number(lives);
   const entry = {
-    name: name.trim().slice(0, 20) || 'Anoniem',
-    time: Math.round(seconds),
-    lives,
+    name: String(name || 'Anoniem').trim().slice(0, 20),
+    time: isNaN(t) ? 0 : Math.round(t),
+    lives: isNaN(l) ? 0 : l,
     date: new Date().toLocaleDateString('nl-NL')
   };
 
-  // Load existing, add, sort, trim
+  // Save locally first
   let scores = [];
   try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]'); } catch(e) {}
+  scores = scores.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }));
   scores.push(entry);
   scores.sort((a, b) => a.time - b.time || b.lives - a.lives);
   scores = scores.slice(0, 20);
-
-  // Save locally first (instant)
   localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
 
-  // Try JSONBin
-  const { binId, apiKey } = getConfig();
-  if (binId && apiKey) {
+  // Try Google Sheets
+  const url = getScriptUrl();
+  if (url) {
     try {
-      await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey
-        },
-        body: JSON.stringify(scores)
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
       });
-    } catch(e) { /* saved locally, that's fine */ }
+      // Wait a moment then reload from server
+      await new Promise(r => setTimeout(r, 1200));
+      return await loadScores();
+    } catch(e) {}
   }
-
   return scores;
-}
-
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2,'0')}`;
 }
 
 function renderRows(scores, highlightName) {
@@ -410,15 +412,15 @@ function renderRows(scores, highlightName) {
 async function renderLeaderboard(highlightName) {
   const el = document.getElementById('lb-list');
   el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
-  const { binId } = getConfig();
-  if (!binId) {
-    el.innerHTML = `<div style="color:#d4a843;text-align:center;font-size:0.8rem;padding:0.5rem;line-height:1.8;">
-      📋 Lokale scores (geen server).<br>
-      <span style="color:#8a6030;">Klik ⚙ in het menu om een<br>online leaderboard in te stellen.</span>
-    </div>`;
-  }
   const scores = await loadScores();
-  el.innerHTML = (el.innerHTML.includes('Lokale scores') ? el.innerHTML : '') + renderRows(scores, highlightName);
+  if (!getScriptUrl()) {
+    el.innerHTML = `<div style="color:#d4a843;text-align:center;font-size:0.8rem;padding:0.5rem 0;line-height:1.8;">
+      📋 Lokale scores (alleen jouw browser).<br>
+      <span style="color:#8a6030;">Klik ⚙ in het menu voor online scores.</span>
+    </div>` + renderRows(scores, highlightName);
+  } else {
+    el.innerHTML = renderRows(scores, highlightName);
+  }
 }
 
 function toggleLeaderboard() {
@@ -433,7 +435,7 @@ async function loadPersonalBest() {
   if (!scores.length) return;
   const best = scores[0];
   document.getElementById('pb-time').textContent = formatTime(best.time);
-  document.getElementById('pb-name').textContent = best.name;
+  document.getElementById('pb-name').textContent = best.name || '';
   document.getElementById('personal-best').style.display = 'block';
 }
 
