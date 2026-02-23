@@ -188,49 +188,82 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // =============================================
-// MAZE DATA (original 29x41 expanded 3x)
+// MAZE — procedurally generated, 15x15 open arena in centre
 // =============================================
-const originalMaze = [
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
-[1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
-[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1],
-[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
-[1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
-[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
-[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
-[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
-[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-[1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1],
-[1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
-[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1],
-[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-[1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1],
-[1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-[1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
-[1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
-[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
 
-// Expand 3x
-const expandedMaze = [];
-for (const row of originalMaze) {
-  const wideRow = [];
-  for (const c of row) wideRow.push(c, c, c);
-  for (let i = 0; i < 3; i++) expandedMaze.push([...wideRow]);
+// Step 1: generate a maze on a grid of odd-dimension cells using
+// recursive backtracking (each cell = 1 unit, walls between them)
+const GRID_COLS = 51; // must be odd
+const GRID_ROWS = 51; // must be odd
+
+function generateMaze(cols, rows) {
+  // Start all walls
+  const grid = [];
+  for (let r = 0; r < rows; r++) {
+    grid.push(new Array(cols).fill(1));
+  }
+
+  // Carve paths — only visit odd-indexed cells as "rooms"
+  const visited = new Set();
+  function idx(c, r) { return r * cols + c; }
+
+  function carve(c, r) {
+    visited.add(idx(c, r));
+    grid[r][c] = 0;
+    // Shuffle directions
+    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
+    for (const [dc, dr] of dirs) {
+      const nc = c + dc, nr = r + dr;
+      if (nc > 0 && nc < cols-1 && nr > 0 && nr < rows-1 && !visited.has(idx(nc, nr))) {
+        // Carve wall between
+        grid[r + dr/2][c + dc/2] = 0;
+        carve(nc, nr);
+      }
+    }
+  }
+  carve(1, 1); // start from top-left room
+
+  // Extra complexity: randomly remove ~18% of remaining walls to create loops
+  for (let r = 1; r < rows-1; r++) {
+    for (let c = 1; c < cols-1; c++) {
+      if (grid[r][c] === 1 && Math.random() < 0.18) {
+        // Only remove interior walls (not border)
+        grid[r][c] = 0;
+      }
+    }
+  }
+
+  // Guarantee border stays solid
+  for (let c = 0; c < cols; c++) { grid[0][c] = 1; grid[rows-1][c] = 1; }
+  for (let r = 0; r < rows; r++) { grid[r][0] = 1; grid[r][cols-1] = 1; }
+
+  // Step 2: carve a 15×15 open arena in the centre
+  const arenaSz = 15;
+  const startC = Math.floor((cols - arenaSz) / 2);
+  const startR = Math.floor((rows - arenaSz) / 2);
+  for (let r = startR; r < startR + arenaSz; r++) {
+    for (let c = startC; c < startC + arenaSz; c++) {
+      grid[r][c] = 0;
+    }
+  }
+
+  // Carve 4 corridors leading into the arena from each cardinal direction
+  const midC = Math.floor(cols / 2);
+  const midR = Math.floor(rows / 2);
+  for (let r = 1; r < startR; r++)           grid[r][midC] = 0; // north
+  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0; // south
+  for (let c = 1; c < startC; c++)           grid[midR][c] = 0; // west
+  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0; // east
+
+  // Guarantee player start (top-left area) is open
+  grid[1][1] = 0; grid[1][2] = 0; grid[2][1] = 0;
+
+  return grid;
 }
-const MAZE_W = expandedMaze[0].length;
-const MAZE_D = expandedMaze.length;
+
+const expandedMaze = generateMaze(GRID_COLS, GRID_ROWS);
+const MAZE_W = GRID_COLS;
+const MAZE_D = GRID_ROWS;
 
 // =============================================
 // THREE.JS SETUP
@@ -434,8 +467,9 @@ function playerCanMove(nx, nz) {
 // =============================================
 // MINOTAUR
 // =============================================
+// Arena centre: grid is 51x51, arena 15x15 starts at col/row 18, centre at 25
 const minotaurGroup = new THREE.Group();
-minotaurGroup.position.set(61.5, 0, 61.5);
+minotaurGroup.position.set(25.5, 0, 25.5);
 scene.add(minotaurGroup);
 
 function makeColor(r, g, b) { return new THREE.MeshLambertMaterial({ color: new THREE.Color(r/255, g/255, b/255) }); }
@@ -507,7 +541,7 @@ for (let i = 0; i < 6; i++) {
 let minotaurHealth = 5;
 let minotaurDead = false;
 let minotaurState = 'patrol';
-let minotaurPatrolTarget = new THREE.Vector3(30, 0, 30);
+let minotaurPatrolTarget = new THREE.Vector3(25, 0, 20);
 let minotaurAttackCooldown = 0;
 const MINOTAUR_CHASE_SPEED = 2.8;
 const MINOTAUR_PATROL_SPEED = 1.0;
@@ -521,7 +555,7 @@ let minotaurBobTime = 0;
 // SHIELD PICKUP
 // =============================================
 const shieldGroup = new THREE.Group();
-shieldGroup.position.set(70, 1, 70);
+shieldGroup.position.set(28, 1, 25); // inside the centre arena
 scene.add(shieldGroup);
 
 const shieldMat = new THREE.MeshLambertMaterial({ color: 0xb07030 });
@@ -705,7 +739,7 @@ function startGame() {
   playerPos.set(4.5, playerHeight, 4.5);
   playerYaw = 0; playerPitch = 0;
   minotaurHealth = 5; minotaurDead = false;
-  minotaurGroup.position.set(61.5, 0, 61.5);
+  minotaurGroup.position.set(25.5, 0, 25.5);
   minotaurGroup.visible = true;
   minotaurState = 'patrol';
   for (const tp of threadPoints) scene.remove(tp);
