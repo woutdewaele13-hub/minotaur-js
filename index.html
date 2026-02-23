@@ -1078,58 +1078,76 @@ function formatTime(s) {
 }
 
 // =============================================
-// LEADERBOARD via JSONBin.io (free public API)
+// LEADERBOARD via Google Apps Script
 // =============================================
-// JSONBin stores a JSON document we read/write via fetch.
-// We use a public bin so no login needed for reading.
-// The API key below is write-only (can only update this bin, not read other bins).
+// Paste your deployed Apps Script URL below after setup.
+// Until then the leaderboard stores scores locally in this browser session only.
+let SCRIPT_URL = ''; // <-- paste your URL here after the 5-min setup
 
-const JSONBIN_BIN_ID  = '6839a5e98960c979a59e7e35';
-const JSONBIN_API_KEY = '$2a$10$s3nHzKHZ8H2q2HJwjU5mMOKA9L6l/kl3GdtPnLtPHPnDMPpHOO7p6';
-const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// In-memory fallback scores (survive only while page is open)
+let localScores = [];
 
 async function loadScores() {
+  if (!SCRIPT_URL) return localScores;
   try {
-    const res = await fetch(JSONBIN_URL + '/latest', {
-      headers: { 'X-Master-Key': JSONBIN_API_KEY }
-    });
+    const res = await fetch(SCRIPT_URL + '?action=get');
     const json = await res.json();
-    return Array.isArray(json.record) ? json.record : [];
-  } catch(e) { console.error('Load scores failed', e); return []; }
+    return Array.isArray(json) ? json : localScores;
+  } catch(e) { return localScores; }
 }
 
 async function saveScore(name, seconds, lives) {
+  const entry = {
+    name: name.trim().slice(0, 20) || 'Anoniem',
+    time: seconds,
+    lives,
+    date: new Date().toLocaleDateString('nl-NL')
+  };
+
+  // Always save locally first so it shows up instantly
+  localScores.push(entry);
+  localScores.sort((a,b) => a.time - b.time || b.lives - a.lives);
+  localScores = localScores.slice(0, 20);
+
+  if (!SCRIPT_URL) return localScores;
+
   try {
-    const scores = await loadScores();
-    scores.push({
-      name: name.trim().slice(0,20) || 'Anoniem',
-      time: seconds,
-      lives,
-      date: new Date().toLocaleDateString('nl-NL')
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Apps Script needs no-cors
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
     });
-    scores.sort((a,b) => a.time - b.time || b.lives - a.lives);
-    const trimmed = scores.slice(0, 20);
-    await fetch(JSONBIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_API_KEY
-      },
-      body: JSON.stringify(trimmed)
-    });
-    return trimmed;
-  } catch(e) { console.error('Save score failed', e); return []; }
+    // After posting, reload from server
+    await new Promise(r => setTimeout(r, 800)); // small delay for script to process
+    return await loadScores();
+  } catch(e) { return localScores; }
 }
 
 async function renderLeaderboard(highlightName) {
   const el = document.getElementById('lb-list');
   el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
   const scores = await loadScores();
+
+  if (!SCRIPT_URL) {
+    el.innerHTML = `<div style="color:#d4a843;text-align:center;padding:0.5rem;font-size:0.8rem;line-height:1.6;">
+      ⚠ Geen server ingesteld.<br>
+      Scores worden alleen lokaal opgeslagen.<br><br>
+      <a href="https://github.com/your-repo#leaderboard-setup" target="_blank"
+         style="color:#80aaff;">Setup instructies →</a>
+    </div>` + (scores.length ? renderRows(scores, highlightName) : '');
+    return;
+  }
+
   if (!scores.length) {
     el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
     return;
   }
-  el.innerHTML = scores.map((s, i) => {
+  el.innerHTML = renderRows(scores, highlightName);
+}
+
+function renderRows(scores, highlightName) {
+  return scores.map((s, i) => {
     const mine = highlightName && s.name === highlightName;
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
     return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
@@ -1147,11 +1165,7 @@ function toggleLeaderboard() {
   if (!visible) renderLeaderboard(null);
 }
 
-async function loadPersonalBest() {
-  const scores = await loadScores();
-  const pbEl = document.getElementById('personal-best');
-  if (pbEl) pbEl.style.display = 'none'; // hide if element exists
-}
+function loadPersonalBest() {} // stub
 
 document.getElementById('submit-score-btn').addEventListener('click', async () => {
   const name = document.getElementById('player-name').value.trim() || 'Anoniem';
