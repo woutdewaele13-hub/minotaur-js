@@ -1,7 +1,3 @@
-Dat is een heel begrijpelijke keuze! JavaScript (zeker in combinatie met HTML5/Canvas of een library zoals Three.js of Phaser) is inderdaad veel makkelijker te delen via GitHub Pages of een browser dan een Python-script.
-
-Ik heb de README aangepast met de juiste programmeertaal en de extra bedankjes toegevoegd.
-
 ⚔️ Theseus & De Minotaurus: Het Labyrint
 Een meeslepende First-Person Action RPG gebaseerd op de klassieke Griekse mythologie, volledig speelbaar in de browser.
 
