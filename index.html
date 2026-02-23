@@ -342,24 +342,42 @@ for (let z = 0; z < MAZE_D; z++) {
 const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
 scene.add(ambient);
 
-function addTorch(x, y, z) {
-  const light = new THREE.PointLight(0xff6010, 2, 10);
-  light.position.set(x, y, z);
-  scene.add(light);
-  // Flame flicker
-  const flickerFn = () => {
-    light.intensity = 1.5 + Math.random() * 1.2;
-    setTimeout(flickerFn, 100 + Math.random() * 200);
-  };
-  flickerFn();
-}
+// Place flickering lights across the maze with random brightness variation
+// so some areas are warmly lit and others feel dark and threatening
+for (let z = 3; z < MAZE_D - 3; z += 6) {
+  for (let x = 3; x < MAZE_W - 3; x += 6) {
+    if (expandedMaze[z][x] === 0) {
+      // Randomly decide: bright torch, dim torch, or skip (dark patch)
+      const roll = Math.random();
+      if (roll < 0.25) continue; // ~25% of spots stay dark
 
-// Place torches every ~20 units
-for (let z = 5; z < MAZE_D - 5; z += 20) {
-  for (let x = 5; x < MAZE_W - 5; x += 20) {
-    if (expandedMaze[z][x] === 0) addTorch(x, 4, z);
+      const isDim    = roll < 0.55; // another 30% are dim
+      const isBright = roll > 0.85; // top 15% are extra bright
+
+      const baseIntensity = isDim ? 0.6 : isBright ? 3.5 : 2.0;
+      const baseRange     = isDim ? 7   : isBright ? 18  : 12;
+      // Dim lights lean more red, bright ones more yellow-orange
+      const col = isDim    ? 0xdd3800 :
+                  isBright ? 0xff9940 : 0xff6010;
+
+      const light = new THREE.PointLight(col, baseIntensity, baseRange);
+      light.position.set(x + 0.5, 4, z + 0.5);
+      scene.add(light);
+
+      // Flicker — dim lights flicker more slowly and subtly
+      const flickerFn = () => {
+        const swing = isDim ? 0.3 : isBright ? 1.8 : 1.2;
+        light.intensity = baseIntensity * (0.75 + Math.random() * swing * 0.5);
+        const delay = isDim ? 200 + Math.random() * 400
+                            : 80  + Math.random() * 180;
+        setTimeout(flickerFn, delay);
+      };
+      flickerFn();
+    }
   }
 }
+
+
 
 // =============================================
 // PLAYER
