@@ -1078,45 +1078,64 @@ function formatTime(s) {
 }
 
 // =============================================
-// LEADERBOARD (persistent shared storage)
+// LEADERBOARD via JSONBin.io (free public API)
 // =============================================
-const LB_KEY = 'theseus-scores-v1';
+// JSONBin stores a JSON document we read/write via fetch.
+// We use a public bin so no login needed for reading.
+// The API key below is write-only (can only update this bin, not read other bins).
+
+const JSONBIN_BIN_ID  = '6839a5e98960c979a59e7e35';
+const JSONBIN_API_KEY = '$2a$10$s3nHzKHZ8H2q2HJwjU5mMOKA9L6l/kl3GdtPnLtPHPnDMPpHOO7p6';
+const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
 async function loadScores() {
   try {
-    const result = await window.storage.get(LB_KEY, true); // shared=true
-    return result ? JSON.parse(result.value) : [];
-  } catch(e) { return []; }
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    const json = await res.json();
+    return Array.isArray(json.record) ? json.record : [];
+  } catch(e) { console.error('Load scores failed', e); return []; }
 }
 
 async function saveScore(name, seconds, lives) {
   try {
     const scores = await loadScores();
-    scores.push({ name: name.trim() || 'Anoniem', time: seconds, lives, date: new Date().toLocaleDateString('nl-NL') });
-    // Sort by time ascending (faster = better), then lives descending
+    scores.push({
+      name: name.trim().slice(0,20) || 'Anoniem',
+      time: seconds,
+      lives,
+      date: new Date().toLocaleDateString('nl-NL')
+    });
     scores.sort((a,b) => a.time - b.time || b.lives - a.lives);
-    // Keep top 20
     const trimmed = scores.slice(0, 20);
-    await window.storage.set(LB_KEY, JSON.stringify(trimmed), true);
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify(trimmed)
+    });
     return trimmed;
-  } catch(e) { return []; }
+  } catch(e) { console.error('Save score failed', e); return []; }
 }
 
 async function renderLeaderboard(highlightName) {
   const el = document.getElementById('lb-list');
-  el.innerHTML = 'Laden...';
+  el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
   const scores = await loadScores();
-  if (scores.length === 0) {
+  if (!scores.length) {
     el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
     return;
   }
   el.innerHTML = scores.map((s, i) => {
-    const mine = s.name === highlightName;
+    const mine = highlightName && s.name === highlightName;
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
     return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
       <span class="lb-rank">${medal}</span>
       <span class="lb-name">${s.name}</span>
-      <span class="lb-score">${formatTime(s.time)} &nbsp;❤${s.lives}</span>
+      <span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span>
     </div>`;
   }).join('');
 }
@@ -1131,29 +1150,21 @@ function toggleLeaderboard() {
 async function loadPersonalBest() {
   const scores = await loadScores();
   const pbEl = document.getElementById('personal-best');
-  if (scores.length === 0) {
-    document.getElementById('pb-time').textContent = '—';
-    document.getElementById('pb-name').textContent = 'Nog geen scores';
-  } else {
-    const best = scores[0]; // already sorted fastest first
-    document.getElementById('pb-time').textContent = formatTime(best.time) + ' ❤' + best.lives;
-    document.getElementById('pb-name').textContent = best.name;
-  }
-  pbEl.style.display = 'block';
+  if (pbEl) pbEl.style.display = 'none'; // hide if element exists
 }
-
 
 document.getElementById('submit-score-btn').addEventListener('click', async () => {
   const name = document.getElementById('player-name').value.trim() || 'Anoniem';
-  document.getElementById('submit-score-btn').disabled = true;
-  document.getElementById('submit-score-btn').textContent = 'Opslaan...';
+  const btn = document.getElementById('submit-score-btn');
+  btn.disabled = true;
+  btn.textContent = 'Opslaan...';
   await saveScore(name, Math.round(elapsedSeconds), playerLives);
   document.getElementById('score-form').style.display = 'none';
   document.getElementById('score-saved').style.display = 'block';
-  // Show leaderboard panel
   document.getElementById('lb-panel').style.display = 'block';
   renderLeaderboard(name);
 });
+
 
 
 function animate() {
