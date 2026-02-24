@@ -8,13 +8,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #000; overflow: hidden; font-family: 'Georgia', serif; }
     canvas { display: block; }
-
-    #ui {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 10;
-    }
-
-    /* ---- MENU ---- */
     #menu {
       position: fixed; inset: 0;
       background: radial-gradient(ellipse at center, #1a0a00 0%, #000 100%);
@@ -27,10 +20,7 @@
       text-shadow: 0 0 30px #d4a84388, 2px 2px 0 #4a2000;
       letter-spacing: 4px; margin-bottom: 0.3rem;
     }
-    #menu .subtitle {
-      font-size: 1.2rem; color: #b06030;
-      letter-spacing: 2px; margin-bottom: 3rem;
-    }
+    #menu .subtitle { font-size: 1.2rem; color: #b06030; letter-spacing: 2px; margin-bottom: 3rem; }
     .menu-btn {
       background: linear-gradient(135deg, #8B2500, #3a0e00);
       border: 2px solid #d4a843; color: #f5d090;
@@ -38,154 +28,78 @@
       padding: 0.8rem 3rem; margin: 0.5rem;
       cursor: pointer; letter-spacing: 2px;
       transition: all 0.2s; border-radius: 3px;
-      text-shadow: 1px 1px 2px #000;
-      pointer-events: all;
+      text-shadow: 1px 1px 2px #000; pointer-events: all;
     }
     .menu-btn:hover {
       background: linear-gradient(135deg, #c03000, #6a1e00);
       box-shadow: 0 0 20px #d4a84366; transform: scale(1.04);
     }
-    .controls-hint {
-      margin-top: 2rem; color: #8a6030; font-size: 0.85rem;
-      letter-spacing: 1px; text-align: center; line-height: 1.8;
-    }
-
-    /* ---- HUD ---- */
-    #hud { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; }
-
-    #hearts {
-      position: fixed; top: 18px; left: 18px;
-      display: flex; gap: 8px;
-    }
-    .heart {
-      width: 32px; height: 32px;
-      font-size: 26px; line-height: 32px;
-      filter: drop-shadow(0 0 6px #ff4444);
-    }
-
+    .controls-hint { margin-top: 2rem; color: #8a6030; font-size: 0.85rem; letter-spacing: 1px; text-align: center; line-height: 1.8; }
+    #hearts { position: fixed; top: 18px; left: 18px; display: flex; gap: 8px; }
+    .heart { width: 32px; height: 32px; font-size: 26px; line-height: 32px; filter: drop-shadow(0 0 6px #ff4444); }
     #shield-status {
-      position: fixed; top: 18px; right: 18px;
-      color: #d4a843; font-size: 1rem;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 14px; border: 1px solid #8a6030;
-      border-radius: 3px; display: none;
-      letter-spacing: 1px;
+      position: fixed; top: 18px; right: 18px; color: #d4a843; font-size: 1rem;
+      background: rgba(0,0,0,0.6); padding: 6px 14px; border: 1px solid #8a6030;
+      border-radius: 3px; display: none; letter-spacing: 1px;
     }
-
     #controls-bar {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      text-align: center; padding: 10px;
-      background: rgba(0,0,0,0.7);
-      color: #b08050; font-size: 0.82rem; letter-spacing: 1px;
+      position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 10px;
+      background: rgba(0,0,0,0.7); color: #b08050; font-size: 0.82rem; letter-spacing: 1px;
       border-top: 1px solid #3a2000;
     }
-
     #message {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: #d4a843; font-size: 1.6rem;
-      text-align: center; text-shadow: 0 0 20px #d4a843aa;
-      background: rgba(0,0,0,0.8); padding: 20px 40px;
-      border: 2px solid #d4a843; border-radius: 4px;
-      display: none; max-width: 480px; line-height: 1.5;
-      pointer-events: none;
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #d4a843; font-size: 1.6rem; text-align: center; text-shadow: 0 0 20px #d4a843aa;
+      background: rgba(0,0,0,0.8); padding: 20px 40px; border: 2px solid #d4a843;
+      border-radius: 4px; display: none; max-width: 480px; line-height: 1.5; pointer-events: none;
     }
-
-    /* ---- CROSSHAIR ---- */
-    #crosshair {
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 20px; height: 20px; pointer-events: none;
-    }
-    #crosshair::before, #crosshair::after {
-      content: ''; position: absolute;
-      background: rgba(255,255,255,0.8);
-    }
+    #crosshair { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; }
+    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.8); }
     #crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
     #crosshair::after  { width: 20px; height: 2px; top: 9px; left: 0; }
-
-    /* ---- MINIMAP ---- */
-    #minimap {
-      position: fixed; top: 18px; left: 50%;
-      transform: translateX(-50%);
-      display: none;
-    }
-    #minimap canvas {
-      border: 2px solid #d4a843;
-      border-radius: 3px;
-      background: rgba(0,0,0,0.85);
-    }
-
-    /* ---- DAMAGE FLASH ---- */
-    #damage-flash {
-      position: fixed; inset: 0;
-      background: rgba(200,0,0,0.35);
-      pointer-events: none; opacity: 0;
-      transition: opacity 0.1s;
-    }
-
-    /* ---- ATTACK FLASH ---- */
-    #attack-flash {
-      position: fixed; inset: 0;
-      background: rgba(255,220,100,0.12);
-      pointer-events: none; opacity: 0;
-      transition: opacity 0.15s;
-    }
-
+    #minimap { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); display: none; }
+    #minimap canvas { border: 2px solid #d4a843; border-radius: 3px; background: rgba(0,0,0,0.85); }
+    #damage-flash { position: fixed; inset: 0; background: rgba(200,0,0,0.35); pointer-events: none; opacity: 0; transition: opacity 0.1s; }
+    #attack-flash { position: fixed; inset: 0; background: rgba(255,220,100,0.12); pointer-events: none; opacity: 0; transition: opacity 0.15s; }
     #timer {
-      position: fixed; top: 18px; left: 50%;
-      transform: translateX(-50%);
-      color: #d4a843; font-size: 1.1rem;
-      background: rgba(0,0,0,0.6);
-      padding: 5px 16px; border: 1px solid #8a6030;
-      border-radius: 3px; display: none;
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+      color: #d4a843; font-size: 1.1rem; background: rgba(0,0,0,0.6);
+      padding: 5px 16px; border: 1px solid #8a6030; border-radius: 3px; display: none;
       font-family: 'Georgia', serif; letter-spacing: 2px;
     }
-
-    /* ---- WIN / LOSE OVERLAYS (FIXED) ---- */
     #win-overlay, #lose-overlay {
-      position: fixed; inset: 0;
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 200; pointer-events: all;
+      position: fixed; inset: 0; display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 200; pointer-events: all;
     }
     #win-overlay  { background: radial-gradient(ellipse, #0a2a10 0%, #000 100%); }
     #lose-overlay { background: radial-gradient(ellipse, #2a0000 0%, #000 100%); }
     #win-overlay h2  { font-size: 4rem; color: #80ff80; text-shadow: 0 0 40px #00ff0066; margin-bottom: 1rem; }
     #lose-overlay h2 { font-size: 4rem; color: #ff4040; text-shadow: 0 0 40px #ff000066; margin-bottom: 1rem; }
     #win-overlay p, #lose-overlay p { color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
-
     #lb-list .lb-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #3a2000; }
     #lb-list .lb-rank { color:#d4a843; width:28px; }
     #lb-list .lb-name { flex:1; }
     #lb-list .lb-score { color:#80ff80; }
     #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
-
-    /* JSONBin setup banner */
     #setup-banner {
       position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
-      background: rgba(10,5,0,0.97); border: 2px solid #d4a843;
-      color: #f5d090; padding: 1rem 1.5rem; border-radius: 6px;
-      font-size: 0.85rem; line-height: 1.7; text-align: center;
-      z-index: 300; display: none; max-width: 480px; pointer-events: all;
+      background: rgba(10,5,0,0.97); border: 2px solid #d4a843; color: #f5d090;
+      padding: 1rem 1.5rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.7;
+      text-align: center; z-index: 300; display: none; max-width: 480px; pointer-events: all;
     }
     #setup-banner a { color: #80aaff; }
     #setup-banner input {
-      font-family: monospace; font-size: 0.8rem;
-      background: #1a0800; border: 1px solid #d4a843;
-      color: #f5d090; padding: 4px 8px; border-radius: 3px;
-      width: 100%; margin: 4px 0;
+      font-family: monospace; font-size: 0.8rem; background: #1a0800; border: 1px solid #d4a843;
+      color: #f5d090; padding: 4px 8px; border-radius: 3px; width: 100%; margin: 4px 0;
     }
     #setup-banner button {
       background: #8B2500; border: 1px solid #d4a843; color: #f5d090;
-      font-family: Georgia, serif; padding: 4px 16px; cursor: pointer;
-      border-radius: 3px; margin-top: 4px;
+      font-family: Georgia, serif; padding: 4px 16px; cursor: pointer; border-radius: 3px; margin-top: 4px;
     }
   </style>
 </head>
 <body>
 
-<!-- MENU -->
 <div id="menu">
   <h1>⚔ THESEUS ⚔</h1>
   <div class="subtitle">Dood de Minotaur!</div>
@@ -197,15 +111,12 @@
   </div>
 </div>
 
-<!-- GOOGLE SHEETS SETUP BANNER -->
 <div id="setup-banner">
   <strong>📋 Online Leaderboard Instellen</strong><br>
   1. Ga naar <a href="https://script.google.com" target="_blank">script.google.com</a><br>
   2. Klik <strong>Nieuw project</strong> → plak de meegeleverde code<br>
   3. Klik <strong>Deploy → New deployment</strong><br>
-  &nbsp;&nbsp; • Type: <strong>Web app</strong><br>
-  &nbsp;&nbsp; • Execute as: <strong>Me</strong><br>
-  &nbsp;&nbsp; • Who has access: <strong>Anyone</strong><br>
+  &nbsp;&nbsp; • Type: <strong>Web app</strong> • Execute as: <strong>Me</strong> • Who has access: <strong>Anyone</strong><br>
   4. Kopieer de <strong>Web app URL</strong> en plak hier:<br>
   <input id="script-url-input" placeholder="https://script.google.com/macros/s/..." />
   <button onclick="saveScriptUrlConfig()">Opslaan & Verbinden</button>
@@ -213,7 +124,6 @@
   <div id="setup-status" style="color:#80ff80;margin-top:4px;"></div>
 </div>
 
-<!-- WIN -->
 <div id="win-overlay">
   <h2>🏆 OVERWINNING!</h2>
   <p id="win-time-text">Je hebt de Minotaur verslagen!</p>
@@ -221,61 +131,47 @@
     <input id="player-name" type="text" maxlength="20" placeholder="Jouw naam..."
       style="font-family:Georgia,serif;font-size:1.1rem;padding:0.5rem 1rem;background:#1a0800;
              border:2px solid #d4a843;color:#f5d090;border-radius:3px;margin-bottom:0.5rem;width:220px;"/>
-    <br>
-    <button class="menu-btn" id="submit-score-btn">Score opslaan</button>
+    <br><button class="menu-btn" id="submit-score-btn">Score opslaan</button>
   </div>
   <div id="score-saved" style="display:none;color:#80ff80;margin-bottom:1rem;font-size:1rem;">✓ Score opgeslagen!</div>
   <button class="menu-btn" onclick="location.reload()">Opnieuw spelen</button>
 </div>
 
-<!-- LOSE -->
 <div id="lose-overlay">
   <h2>💀 GAME OVER</h2>
   <p>De Minotaur heeft je overwonnen...</p>
   <button class="menu-btn" onclick="location.reload()">Probeer opnieuw</button>
 </div>
 
-<!-- LEADERBOARD BUTTON -->
 <div id="lb-btn" onclick="toggleLeaderboard()"
-  style="position:fixed;top:18px;right:18px;background:rgba(0,0,0,0.7);
-         border:1px solid #d4a843;color:#d4a843;padding:6px 14px;
-         cursor:pointer;font-family:Georgia,serif;font-size:0.9rem;
-         border-radius:3px;z-index:50;display:none;letter-spacing:1px;">
-  🏆 Highscores
-</div>
+  style="position:fixed;top:18px;right:18px;background:rgba(0,0,0,0.7);border:1px solid #d4a843;
+         color:#d4a843;padding:6px 14px;cursor:pointer;font-family:Georgia,serif;font-size:0.9rem;
+         border-radius:3px;z-index:50;display:none;letter-spacing:1px;">🏆 Highscores</div>
 
-<!-- PERSONAL BEST -->
 <div id="personal-best"
-  style="position:fixed;top:18px;right:18px;display:none;
-         font-family:Georgia,serif;font-size:0.85rem;color:#d4a843;
-         background:rgba(0,0,0,0.65);border:1px solid #5a3a10;
-         padding:6px 12px;border-radius:3px;z-index:50;
-         pointer-events:none;letter-spacing:1px;line-height:1.6;">
+  style="position:fixed;top:18px;right:18px;display:none;font-family:Georgia,serif;font-size:0.85rem;
+         color:#d4a843;background:rgba(0,0,0,0.65);border:1px solid #5a3a10;padding:6px 12px;
+         border-radius:3px;z-index:50;pointer-events:none;letter-spacing:1px;line-height:1.6;">
   <div style="color:#8a6030;font-size:0.75rem;">🏆 BESTE TIJD</div>
   <div id="pb-time" style="font-size:1rem;">—</div>
   <div id="pb-name" style="color:#8a6030;font-size:0.75rem;"></div>
 </div>
 
-<!-- LEADERBOARD PANEL -->
 <div id="lb-panel"
-  style="position:fixed;top:60px;right:18px;width:280px;
-         background:rgba(10,5,0,0.95);border:2px solid #d4a843;
-         border-radius:4px;padding:1rem;z-index:60;display:none;
+  style="position:fixed;top:60px;right:18px;width:280px;background:rgba(10,5,0,0.95);
+         border:2px solid #d4a843;border-radius:4px;padding:1rem;z-index:60;display:none;
          font-family:Georgia,serif;color:#f5d090;max-height:400px;overflow-y:auto;">
   <h3 style="color:#d4a843;text-align:center;margin-bottom:0.8rem;letter-spacing:2px;">🏆 HIGHSCORES</h3>
   <div id="lb-list" style="font-size:0.9rem;line-height:2;">Laden...</div>
 </div>
 
-<!-- HUD -->
 <div id="timer">⏱ 0:00</div>
 <div id="hearts"></div>
 <div id="shield-status">🛡 Schild Uitgerust</div>
-<div id="controls-bar">
-  [WASD] Lopen &nbsp;|&nbsp; [Muis links] Aanvallen &nbsp;|&nbsp; [R] Schild oppakken &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu
-</div>
+<div id="controls-bar">[WASD] Lopen &nbsp;|&nbsp; [Muis links] Aanvallen &nbsp;|&nbsp; [R] Schild &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu</div>
 <div id="crosshair"></div>
 <div id="message"></div>
-<div id="minimap"><canvas id="mapCanvas" width="200" height="200"></canvas></div>
+<div id="minimap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
 <div id="damage-flash"></div>
 <div id="attack-flash"></div>
 
@@ -283,241 +179,136 @@
 <script>
 
 // =============================================
-// LEADERBOARD — Google Apps Script + localStorage fallback
+// LEADERBOARD
 // =============================================
-// Paste your deployed Google Apps Script URL below.
-// Scores always save locally too, so it works even without a server.
-
-const LS_SCORES_KEY  = 'theseus_scores_v2';
-const LS_SCRIPT_KEY  = 'theseus_script_url';
-
-function getScriptUrl() {
-  return localStorage.getItem(LS_SCRIPT_KEY) || '';
-}
-
+const LS_SCORES_KEY = 'theseus_scores_v2';
+const LS_SCRIPT_KEY = 'theseus_script_url';
+function getScriptUrl() { return localStorage.getItem(LS_SCRIPT_KEY) || ''; }
 function saveScriptUrlConfig() {
   const url = document.getElementById('script-url-input').value.trim();
   if (!url.startsWith('https://script.google.com')) {
-    document.getElementById('setup-status').textContent = '⚠ Ongeldige URL. Moet beginnen met https://script.google.com';
-    return;
+    document.getElementById('setup-status').textContent = '⚠ Ongeldige URL.'; return;
   }
   localStorage.setItem(LS_SCRIPT_KEY, url);
-  document.getElementById('setup-status').textContent = '✓ Opgeslagen! Verbinding wordt getest...';
-  testScriptConnection(url);
+  document.getElementById('setup-status').textContent = '✓ Opgeslagen!';
 }
-
-async function testScriptConnection(url) {
-  try {
-    const res = await fetch(url + '?action=get');
-    if (res.ok) {
-      document.getElementById('setup-status').textContent = '✓ Verbonden! Leaderboard werkt.';
-      setTimeout(() => document.getElementById('setup-banner').style.display = 'none', 2000);
-    } else {
-      document.getElementById('setup-status').textContent = '✗ Fout ' + res.status + '. Controleer je URL en deploy-instellingen.';
-    }
-  } catch(e) {
-    document.getElementById('setup-status').textContent = '✗ Netwerkfout. Controleer de URL.';
-  }
-}
-
-// FIX: safe formatTime — handles undefined/null/NaN
 function formatTime(s) {
-  const n = Number(s);
-  if (isNaN(n) || n < 0) return '?:??';
-  const m = Math.floor(n / 60);
-  const sec = Math.floor(n % 60);
-  return `${m}:${sec.toString().padStart(2, '0')}`;
+  const n = Number(s); if (isNaN(n) || n < 0) return '?:??';
+  return `${Math.floor(n/60)}:${Math.floor(n%60).toString().padStart(2,'0')}`;
 }
-
-// Load scores from Google Sheets or localStorage
 async function loadScores() {
-  const url = getScriptUrl();
-  if (url) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json)) {
-          // Normalize: ensure time is always a number
-          const scores = json.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
-                             .filter(s => !isNaN(s.time))
-                             .sort((a, b) => a.time - b.time || b.lives - a.lives)
-                             .slice(0, 20);
-          localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
-          return scores;
-        }
-      }
-    } catch(e) { /* fall through to local */ }
-  }
-  // Local fallback
   try {
     const raw = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
-    return raw.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
-              .filter(s => !isNaN(s.time))
-              .sort((a, b) => a.time - b.time || b.lives - a.lives);
+    return raw.map(s => ({...s, time: Number(s.time), lives: Number(s.lives)}))
+              .filter(s => !isNaN(s.time)).sort((a,b) => a.time - b.time || b.lives - a.lives);
   } catch(e) { return []; }
 }
-
-// Save a score
 async function saveScore(name, seconds, lives) {
-  const t = Number(seconds);
-  const l = Number(lives);
-  const entry = {
-    name: String(name || 'Anoniem').trim().slice(0, 20),
-    time: isNaN(t) ? 0 : Math.round(t),
-    lives: isNaN(l) ? 0 : l,
-    date: new Date().toLocaleDateString('nl-NL')
-  };
-
-  // Save locally first
+  const entry = { name: String(name||'Anoniem').trim().slice(0,20),
+    time: Math.round(Number(seconds)||0), lives: Number(lives)||0,
+    date: new Date().toLocaleDateString('nl-NL') };
   let scores = [];
-  try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]'); } catch(e) {}
-  scores = scores.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }));
+  try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY)||'[]'); } catch(e) {}
   scores.push(entry);
-  scores.sort((a, b) => a.time - b.time || b.lives - a.lives);
-  scores = scores.slice(0, 20);
+  scores.sort((a,b) => Number(a.time)-Number(b.time) || Number(b.lives)-Number(a.lives));
+  scores = scores.slice(0,20);
   localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
-
-  // Try Google Sheets
   const url = getScriptUrl();
-  if (url) {
-    try {
-      await fetch(url, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry)
-      });
-      // Wait a moment then reload from server
-      await new Promise(r => setTimeout(r, 1200));
-      return await loadScores();
-    } catch(e) {}
-  }
+  if (url) { try { await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}); } catch(e){} }
   return scores;
 }
-
-function renderRows(scores, highlightName) {
-  if (!scores.length) return '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>';
-  return scores.map((s, i) => {
-    const mine = highlightName && s.name === highlightName;
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-    return `<div class="lb-row ${mine ? 'lb-mine' : ''}">
-      <span class="lb-rank">${medal}</span>
-      <span class="lb-name">${s.name}</span>
-      <span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span>
-    </div>`;
+function renderRows(scores, hl) {
+  if (!scores.length) return '<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.</div>';
+  return scores.map((s,i)=>{
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    return `<div class="lb-row ${hl&&s.name===hl?'lb-mine':''}">
+      <span class="lb-rank">${medal}</span><span class="lb-name">${s.name}</span>
+      <span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span></div>`;
   }).join('');
 }
-
-async function renderLeaderboard(highlightName) {
+async function renderLeaderboard(hl) {
   const el = document.getElementById('lb-list');
-  el.innerHTML = '<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
   const scores = await loadScores();
-  if (!getScriptUrl()) {
-    el.innerHTML = `<div style="color:#d4a843;text-align:center;font-size:0.8rem;padding:0.5rem 0;line-height:1.8;">
-      📋 Lokale scores (alleen jouw browser).<br>
-      <span style="color:#8a6030;">Klik ⚙ in het menu voor online scores.</span>
-    </div>` + renderRows(scores, highlightName);
-  } else {
-    el.innerHTML = renderRows(scores, highlightName);
-  }
+  el.innerHTML = renderRows(scores, hl);
 }
-
 function toggleLeaderboard() {
-  const panel = document.getElementById('lb-panel');
-  const visible = panel.style.display === 'block';
-  panel.style.display = visible ? 'none' : 'block';
-  if (!visible) renderLeaderboard(null);
+  const p = document.getElementById('lb-panel');
+  p.style.display = p.style.display==='block'?'none':'block';
+  if (p.style.display==='block') renderLeaderboard(null);
 }
-
 async function loadPersonalBest() {
-  const scores = await loadScores();
-  if (!scores.length) return;
-  const best = scores[0];
-  document.getElementById('pb-time').textContent = formatTime(best.time);
-  document.getElementById('pb-name').textContent = best.name || '';
+  const scores = await loadScores(); if (!scores.length) return;
+  document.getElementById('pb-time').textContent = formatTime(scores[0].time);
+  document.getElementById('pb-name').textContent = scores[0].name||'';
   document.getElementById('personal-best').style.display = 'block';
 }
 
 // =============================================
 // MAZE GENERATION
 // =============================================
-const GRID_COLS = 61;
-const GRID_ROWS = 61;
+const GRID_COLS = 51; // Slightly smaller maze = better Chromebook performance
+const GRID_ROWS = 51;
 
 function generateMaze(cols, rows) {
   const grid = [];
-  for (let r = 0; r < rows; r++) { grid.push(new Array(cols).fill(1)); }
+  for (let r = 0; r < rows; r++) grid.push(new Array(cols).fill(1));
   const visited = new Set();
-  function idx(c, r) { return r * cols + c; }
-  function carve(c, r) {
-    visited.add(idx(c, r));
-    grid[r][c] = 0;
-    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
-    for (const [dc, dr] of dirs) {
-      const nc = c + dc, nr = r + dr;
-      if (nc > 0 && nc < cols-1 && nr > 0 && nr < rows-1 && !visited.has(idx(nc, nr))) {
-        grid[r + dr/2][c + dc/2] = 0;
-        carve(nc, nr);
+  function idx(c,r){ return r*cols+c; }
+  function carve(c,r) {
+    visited.add(idx(c,r)); grid[r][c] = 0;
+    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-0.5);
+    for (const [dc,dr] of dirs) {
+      const nc=c+dc, nr=r+dr;
+      if (nc>0&&nc<cols-1&&nr>0&&nr<rows-1&&!visited.has(idx(nc,nr))) {
+        grid[r+dr/2][c+dc/2]=0; carve(nc,nr);
       }
     }
   }
-  carve(1, 1);
-  for (let r = 1; r < rows-1; r++)
-    for (let c = 1; c < cols-1; c++)
-      if (grid[r][c] === 1 && Math.random() < 0.18) grid[r][c] = 0;
-  for (let c = 0; c < cols; c++) { grid[0][c] = 1; grid[rows-1][c] = 1; }
-  for (let r = 0; r < rows; r++) { grid[r][0] = 1; grid[r][cols-1] = 1; }
-  const arenaSz = 15;
-  const startC = Math.floor((cols - arenaSz) / 2);
-  const startR = Math.floor((rows - arenaSz) / 2);
-  for (let r = startR; r < startR + arenaSz; r++)
-    for (let c = startC; c < startC + arenaSz; c++)
-      grid[r][c] = 0;
-  const midC = Math.floor(cols / 2);
-  const midR = Math.floor(rows / 2);
-  for (let r = 1; r < startR; r++)              grid[r][midC] = 0;
-  for (let r = startR+arenaSz; r < rows-1; r++) grid[r][midC] = 0;
-  for (let c = 1; c < startC; c++)              grid[midR][c] = 0;
-  for (let c = startC+arenaSz; c < cols-1; c++) grid[midR][c] = 0;
-  for (let r = 1; r <= 3; r++)
-    for (let c = 1; c <= 3; c++)
-      grid[r][c] = 0;
+  carve(1,1);
+  for (let r=1;r<rows-1;r++) for (let c=1;c<cols-1;c++) if (grid[r][c]===1&&Math.random()<0.15) grid[r][c]=0;
+  for (let c=0;c<cols;c++) { grid[0][c]=1; grid[rows-1][c]=1; }
+  for (let r=0;r<rows;r++) { grid[r][0]=1; grid[r][cols-1]=1; }
+  const arenaSz=11, startC=Math.floor((cols-arenaSz)/2), startR=Math.floor((rows-arenaSz)/2);
+  for (let r=startR;r<startR+arenaSz;r++) for (let c=startC;c<startC+arenaSz;c++) grid[r][c]=0;
+  const midC=Math.floor(cols/2), midR=Math.floor(rows/2);
+  for (let r=1;r<startR;r++) grid[r][midC]=0;
+  for (let r=startR+arenaSz;r<rows-1;r++) grid[r][midC]=0;
+  for (let c=1;c<startC;c++) grid[midR][c]=0;
+  for (let c=startC+arenaSz;c<cols-1;c++) grid[midR][c]=0;
+  for (let r=1;r<=3;r++) for (let c=1;c<=3;c++) grid[r][c]=0;
   return grid;
 }
 
 const expandedMaze = generateMaze(GRID_COLS, GRID_ROWS);
-const MAZE_W = GRID_COLS;
-const MAZE_D = GRID_ROWS;
+const MAZE_W = GRID_COLS, MAZE_D = GRID_ROWS;
 
 // =============================================
-// THREE.JS SETUP
+// THREE.JS — low-cost settings for Chromebook
 // =============================================
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: false }); // antialias off = faster
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1)); // cap at 1x for Chromebook
+renderer.shadowMap.enabled = false; // shadows off = big speedup
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x000000, 0.055);
+scene.fog = new THREE.FogExp2(0x000000, 0.065); // slightly denser fog = fewer drawn objects
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 120);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 80);
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  swordCamera.aspect = window.innerWidth / window.innerHeight;
+  swordCamera.aspect = window.innerWidth/window.innerHeight;
   swordCamera.updateProjectionMatrix();
 });
 
 // =============================================
-// TEXTURES
+// TEXTURES (smaller = faster on Chromebook)
 // =============================================
-function makeTexture(drawFn, size = 128) {
+function makeTexture(drawFn, size=64) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   drawFn(c.getContext('2d'), size);
@@ -527,92 +318,86 @@ function makeTexture(drawFn, size = 128) {
 }
 
 const wallTex = makeTexture((ctx, s) => {
-  ctx.fillStyle = '#4a3a2a'; ctx.fillRect(0, 0, s, s);
-  for (let y = 0; y < s; y += 16) {
-    const shift = (Math.floor(y / 16) % 2) * 24;
-    for (let x = -shift; x < s + 24; x += 48) {
-      ctx.fillStyle = `rgba(0,0,0,${0.15 + Math.random() * 0.1})`;
-      ctx.fillRect(x + 1, y + 1, 46, 14);
-      ctx.fillStyle = `rgba(80,60,40,${Math.random() * 0.3})`;
-      ctx.fillRect(x + 2, y + 2, 44, 12);
+  ctx.fillStyle = '#4a3a2a'; ctx.fillRect(0,0,s,s);
+  for (let y=0; y<s; y+=16) {
+    const shift = (Math.floor(y/16)%2)*24;
+    for (let x=-shift; x<s+24; x+=48) {
+      ctx.fillStyle = `rgba(0,0,0,0.2)`; ctx.fillRect(x+1,y+1,46,14);
+      ctx.fillStyle = `rgba(80,60,40,0.2)`; ctx.fillRect(x+2,y+2,44,12);
     }
   }
 });
 const floorTex = makeTexture((ctx, s) => {
-  ctx.fillStyle = '#2a2018'; ctx.fillRect(0, 0, s, s);
-  for (let i = 0; i < 200; i++) {
-    ctx.fillStyle = `rgba(${80 + Math.random() * 40},${60 + Math.random() * 30},30,0.4)`;
-    const x = Math.random() * s, y = Math.random() * s;
-    ctx.fillRect(x, y, 2 + Math.random() * 6, 2 + Math.random() * 6);
-  }
-  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
-  for (let i = 0; i < s; i += 16) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+  ctx.fillStyle = '#2a2018'; ctx.fillRect(0,0,s,s);
+  for (let i=0; i<80; i++) {
+    ctx.fillStyle = `rgba(${80+Math.random()*40|0},${60+Math.random()*30|0},30,0.4)`;
+    ctx.fillRect(Math.random()*s, Math.random()*s, 3, 3);
   }
 });
-wallTex.repeat.set(0.5, 0.5);
-floorTex.repeat.set(0.25, 0.25);
+wallTex.repeat.set(0.5,0.5);
+floorTex.repeat.set(0.25,0.25);
 
 // =============================================
 // WORLD BUILDING
+// FIX: DoubleSide = light hits both faces of each wall.
+// Only ONE pass of wall geometry (Z-rows) — no duplicate
+// X-column pass, which caused z-fighting pixel glitches.
 // =============================================
-const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex });
-const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
+const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex,  side: THREE.DoubleSide });
+const floorMat = new THREE.MeshLambertMaterial({ map: floorTex, side: THREE.DoubleSide });
 
-const floorGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
-const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-floorMesh.rotation.x = -Math.PI / 2;
-floorMesh.position.set(MAZE_W / 2, 0, MAZE_D / 2);
+// Floor
+const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(MAZE_W, MAZE_D), floorMat);
+floorMesh.rotation.x = -Math.PI/2;
+floorMesh.position.set(MAZE_W/2, 0, MAZE_D/2);
 scene.add(floorMesh);
 
-const ceilGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
-const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshLambertMaterial({ color: 0x111008 }));
-ceil.rotation.x = Math.PI / 2;
-ceil.position.set(MAZE_W / 2, 5, MAZE_D / 2);
+// Ceiling
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(MAZE_W, MAZE_D),
+  new THREE.MeshLambertMaterial({ color: 0x111008, side: THREE.DoubleSide }));
+ceil.rotation.x = Math.PI/2;
+ceil.position.set(MAZE_W/2, 5, MAZE_D/2);
 scene.add(ceil);
 
+// Walls — single merged pass only (no duplicate geometry = no z-fighting)
 const wallBoxes = [];
-for (let z = 0; z < MAZE_D; z++) {
-  let x = 0;
-  while (x < MAZE_W) {
-    if (expandedMaze[z][x] === 1) {
-      const start = x;
-      while (x < MAZE_W && expandedMaze[z][x] === 1) x++;
-      const length = x - start;
-      const geo = new THREE.BoxGeometry(length, 5, 1);
-      const mesh = new THREE.Mesh(geo, wallMat);
-      mesh.position.set(start + length / 2, 2.5, z + 0.5);
-      mesh.receiveShadow = true;
+for (let z=0; z<MAZE_D; z++) {
+  let x=0;
+  while (x<MAZE_W) {
+    if (expandedMaze[z][x]===1) {
+      const start=x;
+      while (x<MAZE_W && expandedMaze[z][x]===1) x++;
+      const len=x-start;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(len,5,1), wallMat);
+      mesh.position.set(start+len/2, 2.5, z+0.5);
       scene.add(mesh);
-      wallBoxes.push({ minX: start, maxX: start + length, minZ: z, maxZ: z + 1 });
-    } else { x++; }
+      wallBoxes.push({ minX:start, maxX:start+len, minZ:z, maxZ:z+1 });
+    } else x++;
   }
 }
 
-const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
+// Lighting — stronger ambient so DoubleSide surfaces always have base brightness,
+// fewer point lights to keep Chromebook fast
+const ambient = new THREE.AmbientLight(0x3a2510, 3.5);
 scene.add(ambient);
 
-for (let z = 3; z < MAZE_D - 3; z += 6) {
-  for (let x = 3; x < MAZE_W - 3; x += 6) {
-    if (expandedMaze[z][x] === 0) {
-      const roll = Math.random();
-      if (roll < 0.25) continue;
-      const isDim    = roll < 0.55;
-      const isBright = roll > 0.85;
-      const baseIntensity = isDim ? 0.6 : isBright ? 3.5 : 2.0;
-      const baseRange     = isDim ? 7   : isBright ? 18  : 12;
-      const col = isDim ? 0xdd3800 : isBright ? 0xff9940 : 0xff6010;
-      const light = new THREE.PointLight(col, baseIntensity, baseRange);
-      light.position.set(x + 0.5, 4, z + 0.5);
+// Sparser torches, lower range
+for (let z=4; z<MAZE_D-4; z+=8) {
+  for (let x=4; x<MAZE_W-4; x+=8) {
+    if (expandedMaze[z][x]===0 && Math.random()<0.65) {
+      const bright = Math.random()>0.6;
+      const baseI = bright ? 3.0 : 1.5;
+      const baseR = bright ? 14  : 8;
+      const col   = bright ? 0xff8830 : 0xdd4400;
+      const light = new THREE.PointLight(col, baseI, baseR);
+      light.position.set(x+0.5, 4, z+0.5);
       scene.add(light);
-      const flickerFn = () => {
-        const swing = isDim ? 0.3 : isBright ? 1.8 : 1.2;
-        light.intensity = baseIntensity * (0.75 + Math.random() * swing * 0.5);
-        const delay = isDim ? 200 + Math.random() * 400 : 80 + Math.random() * 180;
-        setTimeout(flickerFn, delay);
+      // Gentle flicker
+      const flicker = () => {
+        light.intensity = baseI * (0.8 + Math.random()*0.4);
+        setTimeout(flicker, 120 + Math.random()*200);
       };
-      flickerFn();
+      flicker();
     }
   }
 }
@@ -620,230 +405,160 @@ for (let z = 3; z < MAZE_D - 3; z += 6) {
 // =============================================
 // PLAYER
 // =============================================
-const playerHeight = 1.7;
-const playerRadius = 0.25;
+const playerHeight=1.7, playerRadius=0.25;
 let playerPos = new THREE.Vector3(2, playerHeight, 2);
-let playerYaw = 0, playerPitch = 0;
-let playerLives = 3;
-let hasShield = false;
-let shieldPickedUp = false;
-let isAttacking = false;
-let attackCooldown = 0;
-let invincibleTimer = 0;
-
+let playerYaw=0, playerPitch=0;
+let playerLives=3, hasShield=false, shieldPickedUp=false;
+let isAttacking=false, attackCooldown=0, invincibleTimer=0;
 camera.position.copy(playerPos);
 
 const keys = {};
-document.addEventListener('keydown', e => keys[e.code] = true);
-document.addEventListener('keyup',   e => keys[e.code] = false);
+document.addEventListener('keydown', e=>keys[e.code]=true);
+document.addEventListener('keyup',   e=>keys[e.code]=false);
 
-let locked = false;
-document.addEventListener('click', () => {
-  if (gameRunning && !locked) renderer.domElement.requestPointerLock();
-});
-document.addEventListener('pointerlockchange', () => {
-  locked = document.pointerLockElement === renderer.domElement;
-});
-document.addEventListener('mousemove', e => {
+let locked=false;
+document.addEventListener('click', ()=>{ if (gameRunning&&!locked) renderer.domElement.requestPointerLock(); });
+document.addEventListener('pointerlockchange', ()=>{ locked=document.pointerLockElement===renderer.domElement; });
+document.addEventListener('mousemove', e=>{
   if (!locked) return;
-  playerYaw   -= e.movementX * 0.002;
-  playerPitch -= e.movementY * 0.002;
-  playerPitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, playerPitch));
+  playerYaw   -= e.movementX*0.002;
+  playerPitch -= e.movementY*0.002;
+  playerPitch = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, playerPitch));
 });
 
 // =============================================
 // COLLISION
 // =============================================
-function isWall(x, z) {
-  const gx = Math.floor(x), gz = Math.floor(z);
-  if (gx < 0 || gx >= MAZE_W || gz < 0 || gz >= MAZE_D) return true;
-  return expandedMaze[gz][gx] === 1;
+function isWall(x,z) {
+  const gx=Math.floor(x), gz=Math.floor(z);
+  if (gx<0||gx>=MAZE_W||gz<0||gz>=MAZE_D) return true;
+  return expandedMaze[gz][gx]===1;
 }
-function playerCanMove(nx, nz) {
-  const r = playerRadius;
-  return !isWall(nx - r, nz - r) && !isWall(nx + r, nz - r) &&
-         !isWall(nx - r, nz + r) && !isWall(nx + r, nz + r);
+function playerCanMove(nx,nz) {
+  const r=playerRadius;
+  return !isWall(nx-r,nz-r)&&!isWall(nx+r,nz-r)&&!isWall(nx-r,nz+r)&&!isWall(nx+r,nz+r);
 }
 
 // =============================================
 // MINOTAUR
 // =============================================
 const minotaurGroup = new THREE.Group();
-minotaurGroup.position.set(25.5, 0, 25.5);
+minotaurGroup.position.set(Math.floor(MAZE_W/2)+0.5, 0, Math.floor(MAZE_D/2)+0.5);
 scene.add(minotaurGroup);
 
-function makeColor(r, g, b) { return new THREE.MeshLambertMaterial({ color: new THREE.Color(r/255, g/255, b/255) }); }
-const skinMat  = makeColor(70, 60, 55);
-const furMat   = makeColor(30, 25, 20);
-const hornMat  = makeColor(150, 140, 130);
-const blackMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-const redMat   = new THREE.MeshLambertMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 });
+function makeColor(r,g,b){ return new THREE.MeshLambertMaterial({color:new THREE.Color(r/255,g/255,b/255)}); }
+const skinMat=makeColor(70,60,55), furMat=makeColor(30,25,20), hornMat=makeColor(150,140,130);
+const blackMat=new THREE.MeshLambertMaterial({color:0x111111});
+const redMat=new THREE.MeshLambertMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:0.8});
 
-function addBox(parent, w, h, d, px, py, pz, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  m.position.set(px, py, pz); parent.add(m); return m;
-}
-function addSphere(parent, r, px, py, pz, mat) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), mat);
-  m.position.set(px, py, pz); parent.add(m); return m;
-}
+function addBox(p,w,h,d,px,py,pz,m){ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); mesh.position.set(px,py,pz); p.add(mesh); return mesh; }
+function addSphere(p,r,px,py,pz,m){ const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,5,5),m); mesh.position.set(px,py,pz); p.add(mesh); return mesh; }
 
-addBox(minotaurGroup, 1.2, 2, 0.8, 0, 2, 0, skinMat);
-const headGroup = new THREE.Group();
-headGroup.position.set(0, 3.5, 0.3);
-minotaurGroup.add(headGroup);
-addBox(headGroup, 0.9, 0.7, 1.2, 0, 0, 0, furMat);
-addBox(headGroup, 0.6, 0.4, 0.8, 0, -0.2, 0.5, furMat);
-addSphere(headGroup, 0.08, -0.15, -0.25, 0.9, blackMat);
-addSphere(headGroup, 0.08,  0.15, -0.25, 0.9, blackMat);
-addSphere(headGroup, 0.1, -0.25, 0.15, 0.7, redMat);
-addSphere(headGroup, 0.1,  0.25, 0.15, 0.7, redMat);
-for (const side of [-1, 1]) {
-  for (let i = 0; i < 8; i++) {
-    addSphere(headGroup, Math.max(0.04, 0.18 - i*0.015),
-      0.4*side + i*0.07*side, 0.3 + i*0.1, -i*0.04, hornMat);
-  }
-}
-for (const side of [-1, 1]) {
-  addSphere(minotaurGroup, 0.25, 0.85*side, 2.8, 0, skinMat);
-  for (let i = 0; i < 6; i++) {
-    addBox(minotaurGroup, 0.3, 0.22, 0.3, 0.85*side, 2.6 - i*0.28, 0, skinMat);
-  }
-  addBox(minotaurGroup, 0.4, 0.3, 0.3, 0.85*side, -0.2, 0.3, skinMat);
-}
-for (const side of [-1, 1]) {
-  addSphere(minotaurGroup, 0.25, 0.5*side, 0.8, 0, furMat);
-  for (let i = 0; i < 5; i++) {
-    addBox(minotaurGroup, 0.42, 0.2, 0.45, 0.5*side, 0.7 - i*0.14, 0, furMat);
-  }
-  for (let i = 0; i < 4; i++) {
-    addBox(minotaurGroup, 0.35, 0.17, 0.32, 0.5*side, 0.1 - i*0.02, -0.1 - i*0.09, furMat);
-  }
-  addBox(minotaurGroup, 0.5, 0.22, 0.65, 0.5*side, -0.4, -0.5, blackMat);
-}
-for (let i = 0; i < 6; i++) {
-  addBox(minotaurGroup, 0.12, 0.12, 0.18, 0, 1.5 - i*0.15, -0.5 - i*0.1, furMat);
+addBox(minotaurGroup,1.2,2,0.8,0,2,0,skinMat);
+const headGroup=new THREE.Group(); headGroup.position.set(0,3.5,0.3); minotaurGroup.add(headGroup);
+addBox(headGroup,0.9,0.7,1.2,0,0,0,furMat); addBox(headGroup,0.6,0.4,0.8,0,-0.2,0.5,furMat);
+addSphere(headGroup,0.08,-0.15,-0.25,0.9,blackMat); addSphere(headGroup,0.08,0.15,-0.25,0.9,blackMat);
+addSphere(headGroup,0.1,-0.25,0.15,0.7,redMat); addSphere(headGroup,0.1,0.25,0.15,0.7,redMat);
+for (const side of [-1,1]) {
+  for (let i=0;i<6;i++) addSphere(headGroup,Math.max(0.04,0.16-i*0.02),0.4*side+i*0.07*side,0.3+i*0.1,-i*0.04,hornMat);
+  addSphere(minotaurGroup,0.25,0.85*side,2.8,0,skinMat);
+  for (let i=0;i<5;i++) addBox(minotaurGroup,0.3,0.22,0.3,0.85*side,2.6-i*0.28,0,skinMat);
+  addBox(minotaurGroup,0.4,0.3,0.3,0.85*side,-0.2,0.3,skinMat);
+  addSphere(minotaurGroup,0.25,0.5*side,0.8,0,furMat);
+  for (let i=0;i<4;i++) addBox(minotaurGroup,0.42,0.2,0.45,0.5*side,0.7-i*0.14,0,furMat);
+  for (let i=0;i<3;i++) addBox(minotaurGroup,0.35,0.17,0.32,0.5*side,0.1-i*0.02,-0.1-i*0.09,furMat);
+  addBox(minotaurGroup,0.5,0.22,0.65,0.5*side,-0.4,-0.5,blackMat);
 }
 
-let minotaurHealth = 5;
-let minotaurDead = false;
-let minotaurState = 'patrol';
-let minotaurPatrolTarget = new THREE.Vector3(25, 0, 20);
-let minotaurAttackCooldown = 0;
-const MINOTAUR_CHASE_SPEED  = 2.8;
-const MINOTAUR_PATROL_SPEED = 1.0;
-const DETECTION_RANGE = 16;
-const ATTACK_RANGE    = 2.5;
-let minotaurBobTime = 0;
+let minotaurHealth=5, minotaurDead=false, minotaurState='patrol';
+let minotaurPatrolTarget=new THREE.Vector3(Math.floor(MAZE_W/2),0,Math.floor(MAZE_D/2)-5);
+let minotaurAttackCooldown=0, minotaurBobTime=0;
+const MINOTAUR_CHASE_SPEED=2.8, MINOTAUR_PATROL_SPEED=1.0;
+const DETECTION_RANGE=14, ATTACK_RANGE=2.5;
 
 // =============================================
 // SHIELD PICKUP
 // =============================================
-const shieldGroup = new THREE.Group();
-shieldGroup.position.set(28, 1, 25);
+const shieldGroup=new THREE.Group();
+shieldGroup.position.set(Math.floor(MAZE_W/2)+3, 1, Math.floor(MAZE_D/2));
 scene.add(shieldGroup);
-
-const shieldMat = new THREE.MeshLambertMaterial({ color: 0xb07030 });
-const shieldRim = new THREE.MeshLambertMaterial({ color: 0x8a5020 });
-const shieldMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.12, 16), shieldMat);
-shieldMesh.rotation.x = Math.PI/2;
-shieldGroup.add(shieldMesh);
-const boss = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), shieldRim);
-shieldGroup.add(boss);
-for (const rr of [0.45, 0.68]) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.04, 6, 16), shieldRim);
-  ring.rotation.x = Math.PI/2;
-  shieldGroup.add(ring);
+const shieldMat=new THREE.MeshLambertMaterial({color:0xb07030});
+const shieldRim=new THREE.MeshLambertMaterial({color:0x8a5020});
+const shieldMesh=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.12,12),shieldMat);
+shieldMesh.rotation.x=Math.PI/2; shieldGroup.add(shieldMesh);
+shieldGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.22,6,6),shieldRim));
+for (const rr of [0.45,0.68]) {
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(rr,0.04,5,12),shieldRim);
+  ring.rotation.x=Math.PI/2; shieldGroup.add(ring);
 }
 
 // =============================================
 // SWORD (screen-space)
 // =============================================
-const swordCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10);
-const swordScene = new THREE.Scene();
-const swordGroup = new THREE.Group();
-swordGroup.position.set(0.35, -0.25, -0.5);
+const swordCamera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.01,10);
+const swordScene=new THREE.Scene();
+const swordGroup=new THREE.Group();
+swordGroup.position.set(0.35,-0.25,-0.5);
 swordScene.add(swordGroup);
 
-const silverMat = new THREE.MeshLambertMaterial({ color: 0xc8d0d8, emissive: 0x102030, emissiveIntensity: 0.3 });
-const bronzeMat = new THREE.MeshLambertMaterial({ color: 0xb87333 });
-const brownMat  = new THREE.MeshLambertMaterial({ color: 0x6b3a1f });
+const silverMat=new THREE.MeshLambertMaterial({color:0xc8d0d8,emissive:0x102030,emissiveIntensity:0.3});
+const bronzeMat=new THREE.MeshLambertMaterial({color:0xb87333});
+const brownMat=new THREE.MeshLambertMaterial({color:0x6b3a1f});
 
-for (let i = 0; i < 6; i++) {
-  const bm = new THREE.Mesh(new THREE.BoxGeometry(0.06 - i*0.008, 0.1, 0.02), silverMat);
-  bm.position.set(0, i*0.1, 0); swordGroup.add(bm);
-}
-const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 4), silverMat);
-tip.position.set(0, 0.64, 0); swordGroup.add(tip);
-const cg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.04, 0.04), bronzeMat);
-cg.position.set(0, -0.05, 0); swordGroup.add(cg);
-for (let i = 0; i < 4; i++) {
-  const hm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.05), brownMat);
-  hm.position.set(0, -0.12 - i*0.06, 0); swordGroup.add(hm);
-}
-const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), bronzeMat);
-pommel.position.set(0, -0.38, 0); swordGroup.add(pommel);
+for (let i=0;i<6;i++) { const b=new THREE.Mesh(new THREE.BoxGeometry(0.06-i*0.008,0.1,0.02),silverMat); b.position.set(0,i*0.1,0); swordGroup.add(b); }
+const tip=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.08,4),silverMat); tip.position.set(0,0.64,0); swordGroup.add(tip);
+const cg=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.04,0.04),bronzeMat); cg.position.set(0,-0.05,0); swordGroup.add(cg);
+for (let i=0;i<4;i++) { const h=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.06,0.05),brownMat); h.position.set(0,-0.12-i*0.06,0); swordGroup.add(h); }
+swordGroup.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.06,5,5),bronzeMat),{position:new THREE.Vector3(0,-0.38,0)}));
+swordScene.add(new THREE.AmbientLight(0xffffff,2));
+let swordSwingAngle=0, swordSwinging=false;
 
-swordScene.add(new THREE.AmbientLight(0xffffff, 2));
-
-let swordSwingAngle = 0;
-let swordSwinging = false;
+// Shield on screen
+const shieldScreenGroup=new THREE.Group(); shieldScreenGroup.position.set(-0.28,-0.22,-0.5); shieldScreenGroup.visible=false;
+shieldScreenGroup.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.03,10),shieldMat.clone()),{rotation:new THREE.Euler(Math.PI/2,0,0)}));
+swordScene.add(shieldScreenGroup);
 
 // =============================================
 // ARIADNE THREAD
 // =============================================
-const threadPoints = [];
-let threadTimer = 0;
-let lastThreadPos = new THREE.Vector3(2, 0, 2);
-const threadMat = new THREE.MeshBasicMaterial({ color: 0xff2020 });
+const threadPoints=[];
+let threadTimer=0;
+let lastThreadPos=new THREE.Vector3(2,0,2);
+const threadMat=new THREE.MeshBasicMaterial({color:0xff2020});
 
 function addThreadPoint(pos) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), threadMat);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,4,4),threadMat);
   m.position.copy(pos).setY(0.15);
-  scene.add(m);
-  threadPoints.push(m);
-  if (threadPoints.length > 200) scene.remove(threadPoints.shift());
+  scene.add(m); threadPoints.push(m);
+  if (threadPoints.length>150) scene.remove(threadPoints.shift());
 }
 
 // =============================================
 // MINIMAP
 // =============================================
-const mapCanvas = document.getElementById('mapCanvas');
-const mapCtx = mapCanvas.getContext('2d');
-let minimapVisible = false;
+const mapCanvas=document.getElementById('mapCanvas');
+const mapCtx=mapCanvas.getContext('2d');
+let minimapVisible=false;
 
 function drawMinimap() {
-  const W = mapCanvas.width, H = mapCanvas.height;
-  mapCtx.clearRect(0, 0, W, H);
-  mapCtx.fillStyle = 'rgba(0,0,0,0.85)';
-  mapCtx.fillRect(0, 0, W, H);
-  const cellW = W / MAZE_W, cellH = H / MAZE_D;
-  mapCtx.fillStyle = '#555';
-  for (let z = 0; z < MAZE_D; z += 3)
-    for (let x = 0; x < MAZE_W; x += 3)
-      if (expandedMaze[z][x] === 1)
-        mapCtx.fillRect(x * cellW, z * cellH, cellW * 3, cellH * 3);
-  mapCtx.fillStyle = 'rgba(200,0,0,0.6)';
-  for (const tp of threadPoints)
-    mapCtx.fillRect(tp.position.x * cellW - 1, tp.position.z * cellH - 1, 2, 2);
+  const W=mapCanvas.width, H=mapCanvas.height;
+  mapCtx.clearRect(0,0,W,H);
+  mapCtx.fillStyle='rgba(0,0,0,0.85)'; mapCtx.fillRect(0,0,W,H);
+  const cellW=W/MAZE_W, cellH=H/MAZE_D;
+  mapCtx.fillStyle='#555';
+  for (let z=0;z<MAZE_D;z+=2) for (let x=0;x<MAZE_W;x+=2)
+    if (expandedMaze[z][x]===1) mapCtx.fillRect(x*cellW,z*cellH,cellW*2,cellH*2);
+  mapCtx.fillStyle='rgba(200,0,0,0.6)';
+  for (const tp of threadPoints) mapCtx.fillRect(tp.position.x*cellW-1,tp.position.z*cellH-1,2,2);
   if (!shieldPickedUp) {
-    mapCtx.fillStyle = '#ffff00';
-    mapCtx.beginPath();
-    mapCtx.arc(shieldGroup.position.x * cellW, shieldGroup.position.z * cellH, 3, 0, Math.PI*2);
-    mapCtx.fill();
+    mapCtx.fillStyle='#ffff00'; mapCtx.beginPath();
+    mapCtx.arc(shieldGroup.position.x*cellW,shieldGroup.position.z*cellH,3,0,Math.PI*2); mapCtx.fill();
   }
-  mapCtx.fillStyle = minotaurDead ? '#888' : '#ff2020';
-  mapCtx.beginPath();
-  mapCtx.arc(minotaurGroup.position.x * cellW, minotaurGroup.position.z * cellH, 4, 0, Math.PI*2);
-  mapCtx.fill();
-  mapCtx.fillStyle = '#00ff80';
-  const px = playerPos.x * cellW, pz = playerPos.z * cellH;
-  mapCtx.save();
-  mapCtx.translate(px, pz);
-  mapCtx.rotate(-playerYaw);
-  mapCtx.beginPath();
-  mapCtx.moveTo(0, -5); mapCtx.lineTo(3, 4); mapCtx.lineTo(-3, 4);
-  mapCtx.closePath(); mapCtx.fill();
+  mapCtx.fillStyle=minotaurDead?'#888':'#ff2020'; mapCtx.beginPath();
+  mapCtx.arc(minotaurGroup.position.x*cellW,minotaurGroup.position.z*cellH,4,0,Math.PI*2); mapCtx.fill();
+  mapCtx.fillStyle='#00ff80';
+  mapCtx.save(); mapCtx.translate(playerPos.x*cellW,playerPos.z*cellH); mapCtx.rotate(-playerYaw);
+  mapCtx.beginPath(); mapCtx.moveTo(0,-5); mapCtx.lineTo(3,4); mapCtx.lineTo(-3,4); mapCtx.closePath(); mapCtx.fill();
   mapCtx.restore();
 }
 
@@ -851,288 +566,192 @@ function drawMinimap() {
 // HUD
 // =============================================
 function updateHearts() {
-  const c = document.getElementById('hearts');
-  c.innerHTML = '';
-  for (let i = 0; i < playerLives; i++) {
-    const h = document.createElement('div');
-    h.className = 'heart'; h.textContent = '❤';
-    c.appendChild(h);
+  const c=document.getElementById('hearts'); c.innerHTML='';
+  for (let i=0;i<playerLives;i++) {
+    const h=document.createElement('div'); h.className='heart'; h.textContent='❤'; c.appendChild(h);
   }
 }
-
-function showMessage(txt, duration = 3000) {
-  const el = document.getElementById('message');
-  el.textContent = txt; el.style.display = 'block';
-  if (duration > 0) setTimeout(() => el.style.display = 'none', duration);
+let msgTimer=null;
+function showMessage(txt, duration=3000) {
+  const el=document.getElementById('message'); el.textContent=txt; el.style.display='block';
+  if (msgTimer) clearTimeout(msgTimer);
+  if (duration>0) msgTimer=setTimeout(()=>el.style.display='none', duration);
 }
-
-function flashDamage() {
-  const el = document.getElementById('damage-flash');
-  el.style.opacity = '1';
-  setTimeout(() => el.style.opacity = '0', 150);
-}
-
-function flashAttack() {
-  const el = document.getElementById('attack-flash');
-  el.style.opacity = '1';
-  setTimeout(() => el.style.opacity = '0', 200);
-}
+function flashDamage() { const e=document.getElementById('damage-flash'); e.style.opacity='1'; setTimeout(()=>e.style.opacity='0',150); }
+function flashAttack()  { const e=document.getElementById('attack-flash'); e.style.opacity='1'; setTimeout(()=>e.style.opacity='0',200); }
 
 // =============================================
 // GAME STATE
 // =============================================
-let gameRunning = false;
-let gameOver = false;
-let gameWon = false;
-let gameStartTime = 0;
-let elapsedSeconds = 0;
-const clock = new THREE.Clock();
+let gameRunning=false, gameOver=false, gameWon=false;
+let gameStartTime=0, elapsedSeconds=0;
+const clock=new THREE.Clock();
 
 function startGame() {
-  document.getElementById('menu').style.display = 'none';
-  gameRunning = true; gameOver = false; gameWon = false;
-  playerLives = 3; hasShield = false; shieldPickedUp = false;
-  isAttacking = false; attackCooldown = 0; invincibleTimer = 0;
-  document.getElementById('shield-status').style.display = 'none';
-  playerPos.set(2, playerHeight, 2);
-  playerYaw = 0; playerPitch = 0;
-  minotaurHealth = 5; minotaurDead = false;
-  minotaurGroup.position.set(25.5, 0, 25.5);
-  minotaurGroup.visible = true;
-  minotaurState = 'patrol';
-  for (const tp of threadPoints) scene.remove(tp);
-  threadPoints.length = 0;
+  document.getElementById('menu').style.display='none';
+  gameRunning=true; gameOver=false; gameWon=false;
+  playerLives=3; hasShield=false; shieldPickedUp=false;
+  isAttacking=false; attackCooldown=0; invincibleTimer=0;
+  document.getElementById('shield-status').style.display='none';
+  playerPos.set(2,playerHeight,2); playerYaw=0; playerPitch=0;
+  minotaurHealth=5; minotaurDead=false;
+  minotaurGroup.position.set(Math.floor(MAZE_W/2)+0.5,0,Math.floor(MAZE_D/2)+0.5);
+  minotaurGroup.visible=true; minotaurState='patrol';
+  for (const tp of threadPoints) scene.remove(tp); threadPoints.length=0;
   updateHearts();
-  gameStartTime = performance.now();
-  elapsedSeconds = 0;
-  document.getElementById('timer').style.display = 'block';
-  document.getElementById('lb-btn').style.display = 'none';
-  document.getElementById('lb-panel').style.display = 'none';
-  document.getElementById('win-overlay').style.display = 'none';
-  document.getElementById('lose-overlay').style.display = 'none';
-  document.getElementById('score-form').style.display = 'block';
-  document.getElementById('score-saved').style.display = 'none';
-  document.getElementById('submit-score-btn').disabled = false;
-  document.getElementById('submit-score-btn').textContent = 'Score opslaan';
-  document.getElementById('player-name').value = '';
+  gameStartTime=performance.now(); elapsedSeconds=0;
+  document.getElementById('timer').style.display='block';
+  document.getElementById('lb-btn').style.display='none';
+  document.getElementById('lb-panel').style.display='none';
+  document.getElementById('win-overlay').style.display='none';
+  document.getElementById('lose-overlay').style.display='none';
+  document.getElementById('score-form').style.display='block';
+  document.getElementById('score-saved').style.display='none';
+  document.getElementById('submit-score-btn').disabled=false;
+  document.getElementById('submit-score-btn').textContent='Score opslaan';
+  document.getElementById('player-name').value='';
   loadPersonalBest();
   renderer.domElement.requestPointerLock();
-  document.getElementById('controls-bar').textContent =
-    '[WASD] Lopen | [Klik] Aanvallen | [R] Schild oppakken | [T] Kaart | [ESC] Menu';
 }
-
 document.getElementById('startBtn').addEventListener('click', startGame);
 
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', e=>{
   if (!gameRunning) return;
-  if (e.code === 'KeyT') {
-    minimapVisible = !minimapVisible;
-    document.getElementById('minimap').style.display = minimapVisible ? 'block' : 'none';
-  }
-  if (e.code === 'KeyR') {
+  if (e.code==='KeyT') { minimapVisible=!minimapVisible; document.getElementById('minimap').style.display=minimapVisible?'block':'none'; }
+  if (e.code==='KeyR') {
     if (!shieldPickedUp) {
-      const d = playerPos.distanceTo(shieldGroup.position);
-      if (d < 4) {
-        shieldPickedUp = true; hasShield = true;
-        shieldGroup.visible = false;
-        document.getElementById('shield-status').style.display = 'block';
+      if (playerPos.distanceTo(shieldGroup.position)<4) {
+        shieldPickedUp=true; hasShield=true; shieldGroup.visible=false;
+        document.getElementById('shield-status').style.display='block';
         showMessage('🛡 Schild uitgerust! Extra bescherming!');
-      } else {
-        showMessage('Kom dichter bij het schild!', 1500);
-      }
+      } else showMessage('Kom dichter bij het schild!',1500);
     } else {
-      hasShield = false; shieldPickedUp = false;
-      shieldGroup.position.set(playerPos.x + 1, 1, playerPos.z);
-      shieldGroup.visible = true;
-      document.getElementById('shield-status').style.display = 'none';
+      hasShield=false; shieldPickedUp=false;
+      shieldGroup.position.set(playerPos.x+1,1,playerPos.z); shieldGroup.visible=true;
+      document.getElementById('shield-status').style.display='none';
     }
   }
-  if (e.code === 'Escape') {
-    document.exitPointerLock();
-    gameRunning = false;
-    document.getElementById('menu').style.display = 'flex';
-  }
+  if (e.code==='Escape') { document.exitPointerLock(); gameRunning=false; document.getElementById('menu').style.display='flex'; }
 });
 
-document.addEventListener('mousedown', e => {
-  if (!gameRunning || !locked) return;
-  if (e.button === 0) doAttack();
-});
+document.addEventListener('mousedown', e=>{ if (gameRunning&&locked&&e.button===0) doAttack(); });
 
 function doAttack() {
-  if (isAttacking || attackCooldown > 0) return;
-  isAttacking = true;
-  attackCooldown = 0.5;
-  swordSwinging = true;
-  flashAttack();
+  if (isAttacking||attackCooldown>0) return;
+  isAttacking=true; attackCooldown=0.5; swordSwinging=true; flashAttack();
   if (!minotaurDead) {
-    const toMinotaur = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
-    const forward = new THREE.Vector3(-Math.sin(playerYaw), 0, -Math.cos(playerYaw));
-    const dot = forward.dot(toMinotaur);
-    const dist = playerPos.distanceTo(minotaurGroup.position);
-    if (dist < 4 && dot > 0.55) {
-      minotaurHealth -= 1;
-      showMessage(`Raak! Minotaur leven: ${minotaurHealth}/5`, 1200);
-      const kbDir = new THREE.Vector3().subVectors(minotaurGroup.position, playerPos).normalize();
-      minotaurGroup.position.addScaledVector(kbDir, 2);
-      if (minotaurHealth <= 0) {
-        minotaurDead = true;
-        minotaurGroup.visible = false;
-        showMessage('Minotaur verslagen! Keer terug naar het begin om te WINNEN!', 5000);
-      }
+    const toM=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+    const fwd=new THREE.Vector3(-Math.sin(playerYaw),0,-Math.cos(playerYaw));
+    const dist=playerPos.distanceTo(minotaurGroup.position);
+    if (dist<4&&fwd.dot(toM)>0.55) {
+      minotaurHealth--;
+      showMessage(`Raak! Minotaur leven: ${minotaurHealth}/5`,1200);
+      minotaurGroup.position.addScaledVector(new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize(),2);
+      if (minotaurHealth<=0) { minotaurDead=true; minotaurGroup.visible=false; showMessage('Minotaur verslagen! Keer terug naar het begin!',5000); }
     }
   }
-  setTimeout(() => { isAttacking = false; swordSwinging = false; }, 300);
+  setTimeout(()=>{ isAttacking=false; swordSwinging=false; },300);
 }
 
 // =============================================
 // MINOTAUR AI
 // =============================================
 function minotaurCanMoveTo(pos) {
-  const gx = Math.floor(pos.x), gz = Math.floor(pos.z);
-  if (gx < 0 || gx >= MAZE_W || gz < 0 || gz >= MAZE_D) return false;
-  return expandedMaze[gz][gx] === 0;
+  const gx=Math.floor(pos.x), gz=Math.floor(pos.z);
+  if (gx<0||gx>=MAZE_W||gz<0||gz>=MAZE_D) return false;
+  return expandedMaze[gz][gx]===0;
 }
-
 function updateMinotaur(dt) {
   if (minotaurDead) return;
-  const toPlayer = new THREE.Vector3().subVectors(playerPos, minotaurGroup.position);
-  toPlayer.y = 0;
-  const dist = toPlayer.length();
-  if (dist < DETECTION_RANGE) minotaurState = 'chase';
-  else if (dist > DETECTION_RANGE * 1.5) minotaurState = 'patrol';
-  minotaurBobTime += dt * 3;
-  minotaurGroup.position.y = Math.sin(minotaurBobTime) * 0.1;
-  redMat.emissiveIntensity = 0.6 + Math.sin(minotaurBobTime * 2) * 0.4;
-
-  if (minotaurState === 'chase') {
-    const dir = toPlayer.clone().normalize();
-    const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_CHASE_SPEED * dt);
-    newPos.y = 0;
+  const toPlayer=new THREE.Vector3().subVectors(playerPos,minotaurGroup.position); toPlayer.y=0;
+  const dist=toPlayer.length();
+  if (dist<DETECTION_RANGE) minotaurState='chase';
+  else if (dist>DETECTION_RANGE*1.5) minotaurState='patrol';
+  minotaurBobTime+=dt*3;
+  minotaurGroup.position.y=Math.sin(minotaurBobTime)*0.1;
+  redMat.emissiveIntensity=0.6+Math.sin(minotaurBobTime*2)*0.4;
+  if (minotaurState==='chase') {
+    const dir=toPlayer.clone().normalize();
+    const newPos=minotaurGroup.position.clone().addScaledVector(dir,MINOTAUR_CHASE_SPEED*dt); newPos.y=0;
     if (minotaurCanMoveTo(newPos)) minotaurGroup.position.copy(newPos);
-    minotaurGroup.lookAt(new THREE.Vector3(playerPos.x, minotaurGroup.position.y, playerPos.z));
-    if (dist < ATTACK_RANGE && minotaurAttackCooldown <= 0) minotaurAttack();
+    minotaurGroup.lookAt(new THREE.Vector3(playerPos.x,minotaurGroup.position.y,playerPos.z));
+    if (dist<ATTACK_RANGE&&minotaurAttackCooldown<=0) minotaurAttack();
   } else {
-    const toDest = new THREE.Vector3().subVectors(minotaurPatrolTarget, minotaurGroup.position);
-    toDest.y = 0;
-    if (toDest.length() < 2) {
-      minotaurPatrolTarget.set(10 + Math.random() * (MAZE_W - 20), 0, 10 + Math.random() * (MAZE_D - 20));
+    const toDest=new THREE.Vector3().subVectors(minotaurPatrolTarget,minotaurGroup.position); toDest.y=0;
+    if (toDest.length()<2) {
+      minotaurPatrolTarget.set(8+Math.random()*(MAZE_W-16),0,8+Math.random()*(MAZE_D-16));
     } else {
-      const dir = toDest.normalize();
-      const newPos = minotaurGroup.position.clone().addScaledVector(dir, MINOTAUR_PATROL_SPEED * dt);
-      newPos.y = 0;
-      if (minotaurCanMoveTo(newPos)) {
-        minotaurGroup.position.copy(newPos);
-        minotaurGroup.lookAt(new THREE.Vector3(minotaurPatrolTarget.x, minotaurGroup.position.y, minotaurPatrolTarget.z));
-      } else {
-        minotaurPatrolTarget.set(10 + Math.random() * (MAZE_W - 20), 0, 10 + Math.random() * (MAZE_D - 20));
-      }
+      const dir=toDest.normalize();
+      const newPos=minotaurGroup.position.clone().addScaledVector(dir,MINOTAUR_PATROL_SPEED*dt); newPos.y=0;
+      if (minotaurCanMoveTo(newPos)) { minotaurGroup.position.copy(newPos); minotaurGroup.lookAt(new THREE.Vector3(minotaurPatrolTarget.x,minotaurGroup.position.y,minotaurPatrolTarget.z)); }
+      else minotaurPatrolTarget.set(8+Math.random()*(MAZE_W-16),0,8+Math.random()*(MAZE_D-16));
     }
   }
-  if (minotaurAttackCooldown > 0) minotaurAttackCooldown -= dt;
+  if (minotaurAttackCooldown>0) minotaurAttackCooldown-=dt;
 }
-
 function minotaurAttack() {
-  if (gameOver || invincibleTimer > 0) return;
-  minotaurAttackCooldown = 2.0;
-  invincibleTimer = 1.5;
-  if (hasShield && Math.random() < 0.5) {
-    showMessage('🛡 Schild geblokkeerd!', 1000);
-    return;
-  }
-  playerLives--;
-  updateHearts();
-  flashDamage();
-  showMessage(playerLives > 0 ? `Geraakt! Leven: ${playerLives}` : '', 1000);
-  if (playerLives <= 0) {
-    gameOver = true; gameRunning = false;
-    document.exitPointerLock();
-    document.getElementById('lose-overlay').style.display = 'flex';
-  }
+  if (gameOver||invincibleTimer>0) return;
+  minotaurAttackCooldown=2.0; invincibleTimer=1.5;
+  if (hasShield&&Math.random()<0.5) { showMessage('🛡 Schild geblokkeerd!',1000); return; }
+  playerLives--; updateHearts(); flashDamage();
+  showMessage(playerLives>0?`Geraakt! Leven: ${playerLives}`:'',1000);
+  if (playerLives<=0) { gameOver=true; gameRunning=false; document.exitPointerLock(); document.getElementById('lose-overlay').style.display='flex'; }
 }
 
 // =============================================
 // PLAYER MOVEMENT
 // =============================================
 function updatePlayer(dt) {
-  const sinY = Math.sin(playerYaw), cosY = Math.cos(playerYaw);
-  const forward = new THREE.Vector3(-sinY, 0, -cosY);
-  const right   = new THREE.Vector3(cosY, 0, -sinY);
-  const moveSpeed = 5;
-  let move = new THREE.Vector3();
-  if (keys['KeyW'] || keys['ArrowUp'])    move.addScaledVector(forward, 1);
-  if (keys['KeyS'] || keys['ArrowDown'])  move.addScaledVector(forward, -1);
-  if (keys['KeyA'] || keys['ArrowLeft'])  move.addScaledVector(right, -1);
-  if (keys['KeyD'] || keys['ArrowRight']) move.addScaledVector(right, 1);
-  if (move.length() > 0) move.normalize();
-  let nx = playerPos.x + move.x * moveSpeed * dt;
-  let nz = playerPos.z + move.z * moveSpeed * dt;
-  if (playerCanMove(nx, playerPos.z)) playerPos.x = nx;
-  if (playerCanMove(playerPos.x, nz)) playerPos.z = nz;
+  const sinY=Math.sin(playerYaw), cosY=Math.cos(playerYaw);
+  const forward=new THREE.Vector3(-sinY,0,-cosY);
+  const right=new THREE.Vector3(cosY,0,-sinY);
+  let move=new THREE.Vector3();
+  if (keys['KeyW']||keys['ArrowUp'])    move.addScaledVector(forward,1);
+  if (keys['KeyS']||keys['ArrowDown'])  move.addScaledVector(forward,-1);
+  if (keys['KeyA']||keys['ArrowLeft'])  move.addScaledVector(right,-1);
+  if (keys['KeyD']||keys['ArrowRight']) move.addScaledVector(right,1);
+  if (move.length()>0) move.normalize();
+  const nx=playerPos.x+move.x*5*dt, nz=playerPos.z+move.z*5*dt;
+  if (playerCanMove(nx,playerPos.z)) playerPos.x=nx;
+  if (playerCanMove(playerPos.x,nz)) playerPos.z=nz;
   camera.position.copy(playerPos);
-  camera.rotation.order = 'YXZ';
-  camera.rotation.y = playerYaw;
-  camera.rotation.x = playerPitch;
-  if (invincibleTimer > 0) invincibleTimer -= dt;
-  threadTimer += dt;
-  if (playerPos.distanceTo(lastThreadPos) > 0.6 && threadTimer > 0.3) {
-    addThreadPoint(playerPos);
-    lastThreadPos.copy(playerPos);
-    threadTimer = 0;
+  camera.rotation.order='YXZ'; camera.rotation.y=playerYaw; camera.rotation.x=playerPitch;
+  if (invincibleTimer>0) invincibleTimer-=dt;
+  threadTimer+=dt;
+  if (playerPos.distanceTo(lastThreadPos)>0.6&&threadTimer>0.3) {
+    addThreadPoint(playerPos); lastThreadPos.copy(playerPos); threadTimer=0;
   }
 }
-
-// =============================================
-// SHIELD SCREEN
-// =============================================
-const shieldScreenGroup = new THREE.Group();
-shieldScreenGroup.position.set(-0.28, -0.22, -0.5);
-shieldScreenGroup.visible = false;
-const shieldScreenMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 12), shieldMat.clone());
-shieldScreenMesh.rotation.x = Math.PI/2;
-shieldScreenGroup.add(shieldScreenMesh);
-swordScene.add(shieldScreenGroup);
 
 // =============================================
 // WIN CHECK
 // =============================================
 function checkWin() {
-  if (minotaurDead && playerPos.distanceTo(new THREE.Vector3(2, playerHeight, 2)) < 6) {
-    gameRunning = false; gameWon = true;
-    elapsedSeconds = (performance.now() - gameStartTime) / 1000;
+  if (minotaurDead&&playerPos.distanceTo(new THREE.Vector3(2,playerHeight,2))<6) {
+    gameRunning=false; gameWon=true;
+    elapsedSeconds=(performance.now()-gameStartTime)/1000;
     document.exitPointerLock();
-    document.getElementById('timer').style.display = 'none';
-    document.getElementById('personal-best').style.display = 'none';
-    document.getElementById('lb-btn').style.display = 'block';
-    document.getElementById('win-time-text').textContent =
-      `Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
-    document.getElementById('win-overlay').style.display = 'flex';
+    document.getElementById('timer').style.display='none';
+    document.getElementById('personal-best').style.display='none';
+    document.getElementById('lb-btn').style.display='block';
+    document.getElementById('win-time-text').textContent=`Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
+    document.getElementById('win-overlay').style.display='flex';
     renderLeaderboard(null);
   }
 }
-
 function checkShieldProximity() {
-  if (!shieldPickedUp) {
-    const d = playerPos.distanceTo(shieldGroup.position);
-    if (d < 5) {
-      document.getElementById('controls-bar').textContent =
-        `🛡 Schild vlakbij! [R] om op te pakken (afstand: ${d.toFixed(1)}m)`;
-    }
-  }
+  if (!shieldPickedUp&&playerPos.distanceTo(shieldGroup.position)<5)
+    document.getElementById('controls-bar').textContent=`🛡 Schild vlakbij! [R] om op te pakken`;
 }
 
-// =============================================
-// SUBMIT SCORE
-// =============================================
-document.getElementById('submit-score-btn').addEventListener('click', async () => {
-  const name = document.getElementById('player-name').value.trim() || 'Anoniem';
-  const btn  = document.getElementById('submit-score-btn');
-  btn.disabled = true;
-  btn.textContent = 'Opslaan...';
-  await saveScore(name, elapsedSeconds, playerLives);
-  document.getElementById('score-form').style.display = 'none';
-  document.getElementById('score-saved').style.display = 'block';
-  document.getElementById('lb-panel').style.display = 'block';
+document.getElementById('submit-score-btn').addEventListener('click', async ()=>{
+  const name=document.getElementById('player-name').value.trim()||'Anoniem';
+  const btn=document.getElementById('submit-score-btn');
+  btn.disabled=true; btn.textContent='Opslaan...';
+  await saveScore(name,elapsedSeconds,playerLives);
+  document.getElementById('score-form').style.display='none';
+  document.getElementById('score-saved').style.display='block';
+  document.getElementById('lb-panel').style.display='block';
   renderLeaderboard(name);
 });
 
@@ -1141,33 +760,24 @@ document.getElementById('submit-score-btn').addEventListener('click', async () =
 // =============================================
 function animate() {
   requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const dt=Math.min(clock.getDelta(),0.05);
   if (gameRunning) {
-    elapsedSeconds = (performance.now() - gameStartTime) / 1000;
-    document.getElementById('timer').textContent = `⏱ ${formatTime(elapsedSeconds)}`;
-    updatePlayer(dt);
-    updateMinotaur(dt);
-    checkWin();
-    checkShieldProximity();
-    shieldGroup.rotation.y += dt * 1.2;
-    if (swordSwinging) {
-      swordSwingAngle = Math.min(swordSwingAngle + dt * 15, 1.2);
-    } else {
-      swordSwingAngle = Math.max(swordSwingAngle - dt * 8, 0);
-    }
-    swordGroup.rotation.x = -swordSwingAngle * 0.8;
-    swordGroup.rotation.z = swordSwingAngle * 0.3;
-    attackCooldown = Math.max(0, attackCooldown - dt);
-    shieldScreenGroup.visible = hasShield;
+    elapsedSeconds=(performance.now()-gameStartTime)/1000;
+    document.getElementById('timer').textContent=`⏱ ${formatTime(elapsedSeconds)}`;
+    updatePlayer(dt); updateMinotaur(dt); checkWin(); checkShieldProximity();
+    shieldGroup.rotation.y+=dt*1.2;
+    swordSwingAngle = swordSwinging ? Math.min(swordSwingAngle+dt*15,1.2) : Math.max(swordSwingAngle-dt*8,0);
+    swordGroup.rotation.x=-swordSwingAngle*0.8; swordGroup.rotation.z=swordSwingAngle*0.3;
+    attackCooldown=Math.max(0,attackCooldown-dt);
+    shieldScreenGroup.visible=hasShield;
     if (minimapVisible) drawMinimap();
   }
-  renderer.autoClear = true;
-  renderer.render(scene, camera);
-  renderer.autoClear = false;
+  renderer.autoClear=true;
+  renderer.render(scene,camera);
+  renderer.autoClear=false;
   renderer.clearDepth();
-  renderer.render(swordScene, swordCamera);
+  renderer.render(swordScene,swordCamera);
 }
-
 animate();
 </script>
 </body>
