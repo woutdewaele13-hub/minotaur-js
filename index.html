@@ -285,9 +285,6 @@
 // =============================================
 // LEADERBOARD — Google Apps Script + localStorage fallback
 // =============================================
-// Paste your deployed Google Apps Script URL below.
-// Scores always save locally too, so it works even without a server.
-
 const LS_SCORES_KEY  = 'theseus_scores_v2';
 const LS_SCRIPT_KEY  = 'theseus_script_url';
 
@@ -320,7 +317,6 @@ async function testScriptConnection(url) {
   }
 }
 
-// FIX: safe formatTime — handles undefined/null/NaN
 function formatTime(s) {
   const n = Number(s);
   if (isNaN(n) || n < 0) return '?:??';
@@ -329,7 +325,6 @@ function formatTime(s) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-// Load scores from Google Sheets or localStorage
 async function loadScores() {
   const url = getScriptUrl();
   if (url) {
@@ -338,7 +333,6 @@ async function loadScores() {
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json)) {
-          // Normalize: ensure time is always a number
           const scores = json.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
                              .filter(s => !isNaN(s.time))
                              .sort((a, b) => a.time - b.time || b.lives - a.lives)
@@ -349,7 +343,6 @@ async function loadScores() {
       }
     } catch(e) { /* fall through to local */ }
   }
-  // Local fallback
   try {
     const raw = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
     return raw.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
@@ -358,7 +351,6 @@ async function loadScores() {
   } catch(e) { return []; }
 }
 
-// Save a score
 async function saveScore(name, seconds, lives) {
   const t = Number(seconds);
   const l = Number(lives);
@@ -368,8 +360,6 @@ async function saveScore(name, seconds, lives) {
     lives: isNaN(l) ? 0 : l,
     date: new Date().toLocaleDateString('nl-NL')
   };
-
-  // Save locally first
   let scores = [];
   try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]'); } catch(e) {}
   scores = scores.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }));
@@ -377,8 +367,6 @@ async function saveScore(name, seconds, lives) {
   scores.sort((a, b) => a.time - b.time || b.lives - a.lives);
   scores = scores.slice(0, 20);
   localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
-
-  // Try Google Sheets
   const url = getScriptUrl();
   if (url) {
     try {
@@ -388,7 +376,6 @@ async function saveScore(name, seconds, lives) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
       });
-      // Wait a moment then reload from server
       await new Promise(r => setTimeout(r, 1200));
       return await loadScores();
     } catch(e) {}
@@ -613,6 +600,135 @@ for (let z = 3; z < MAZE_D - 3; z += 6) {
         setTimeout(flickerFn, delay);
       };
       flickerFn();
+    }
+  }
+}
+
+// =============================================
+// TORCHES — placed every 5 blocks along open corridors
+// =============================================
+
+// Materials shared by all torches
+const torchWoodMat  = new THREE.MeshLambertMaterial({ color: 0x6b3a1f });
+const torchIronMat  = new THREE.MeshLambertMaterial({ color: 0x888888 });
+const torchBowlMat  = new THREE.MeshLambertMaterial({ color: 0x555555 });
+const torchFlameMatBase = new THREE.MeshLambertMaterial({
+  color: 0xff6600,
+  emissive: 0xff4400,
+  emissiveIntensity: 1.0,
+  transparent: true,
+  opacity: 0.9
+});
+
+// Track torch flame meshes for animation
+const torchFlames = [];    // { mesh, light, baseIntensity, phase }
+
+function buildTorch(wx, wy, wz, facingDir) {
+  // facingDir: 'N','S','E','W' — which wall face the torch is on
+  const group = new THREE.Group();
+
+  // Wooden handle (cylinder)
+  const handleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.45, 6);
+  const handle = new THREE.Mesh(handleGeo, torchWoodMat);
+  handle.position.set(0, 0, 0);
+  // Tilt slightly off wall
+  if (facingDir === 'N' || facingDir === 'S') {
+    handle.rotation.x = (facingDir === 'N' ? 1 : -1) * 0.3;
+  } else {
+    handle.rotation.z = (facingDir === 'E' ? -1 : 1) * 0.3;
+  }
+  group.add(handle);
+
+  // Iron bracket (small box behind handle)
+  const bracketGeo = new THREE.BoxGeometry(0.08, 0.06, 0.08);
+  const bracket = new THREE.Mesh(bracketGeo, torchIronMat);
+  bracket.position.set(0, -0.18, 0);
+  group.add(bracket);
+
+  // Bowl / cup on top
+  const bowlGeo = new THREE.CylinderGeometry(0.1, 0.06, 0.1, 8);
+  const bowl = new THREE.Mesh(bowlGeo, torchBowlMat);
+  bowl.position.set(0, 0.28, 0);
+  group.add(bowl);
+
+  // Flame (cone)
+  const flameGeo = new THREE.ConeGeometry(0.09, 0.22, 7);
+  const flameMat = torchFlameMatBase.clone();
+  flameMat.color.set(0xff6600);
+  flameMat.emissive.set(0xff3300);
+  const flame = new THREE.Mesh(flameGeo, flameMat);
+  flame.position.set(0, 0.44, 0);
+  group.add(flame);
+
+  // Inner bright core of flame
+  const coreGeo = new THREE.ConeGeometry(0.04, 0.14, 6);
+  const coreMat = new THREE.MeshLambertMaterial({
+    color: 0xffee88,
+    emissive: 0xffcc00,
+    emissiveIntensity: 1.5,
+    transparent: true,
+    opacity: 0.95
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.position.set(0, 0.48, 0);
+  group.add(core);
+
+  // Position the group against the wall
+  group.position.set(wx, wy, wz);
+
+  // Offset slightly from the wall surface
+  const offset = 0.3;
+  if (facingDir === 'N') group.position.z += offset;
+  if (facingDir === 'S') group.position.z -= offset;
+  if (facingDir === 'E') group.position.x -= offset;
+  if (facingDir === 'W') group.position.x += offset;
+
+  scene.add(group);
+
+  // Point light for the torch
+  const torchLight = new THREE.PointLight(0xff7722, 2.5, 8);
+  torchLight.position.copy(group.position);
+  torchLight.position.y = wy + 0.5;
+  scene.add(torchLight);
+
+  // Register flame for animation
+  torchFlames.push({
+    flameMesh: flame,
+    coreMesh: core,
+    light: torchLight,
+    baseIntensity: 2.5,
+    phase: Math.random() * Math.PI * 2  // random start phase
+  });
+}
+
+// Scan the maze and place torches every 5 cells in open corridors next to walls
+const TORCH_SPACING = 5;
+
+for (let z = 1; z < MAZE_D - 1; z++) {
+  for (let x = 1; x < MAZE_W - 1; x++) {
+    // Only place on open floor cells that land on the 5-block grid
+    if (expandedMaze[z][x] !== 0) continue;
+    if (x % TORCH_SPACING !== 0 && z % TORCH_SPACING !== 0) continue;
+
+    // Check each cardinal neighbor — if it's a wall, mount a torch on that wall face
+    // Only mount one torch per cell (first valid wall wins) to avoid clutter
+    const wallHeight = 1.8; // mount height
+
+    // North wall (z-1 is wall, open cell is z)
+    if (expandedMaze[z - 1][x] === 1) {
+      buildTorch(x + 0.5, wallHeight, z, 'N');
+    }
+    // South wall
+    else if (expandedMaze[z + 1][x] === 1) {
+      buildTorch(x + 0.5, wallHeight, z + 1, 'S');
+    }
+    // West wall
+    else if (expandedMaze[z][x - 1] === 1) {
+      buildTorch(x, wallHeight, z + 0.5, 'W');
+    }
+    // East wall
+    else if (expandedMaze[z][x + 1] === 1) {
+      buildTorch(x + 1, wallHeight, z + 0.5, 'E');
     }
   }
 }
@@ -1137,6 +1253,37 @@ document.getElementById('submit-score-btn').addEventListener('click', async () =
 });
 
 // =============================================
+// TORCH FLAME ANIMATION
+// =============================================
+let torchTime = 0;
+
+function updateTorches(dt) {
+  torchTime += dt;
+  for (const t of torchFlames) {
+    t.phase += dt * (2.5 + Math.random() * 1.5);
+    // Animate flame scale — flicker up/down
+    const flicker = 0.85 + Math.sin(t.phase * 3.7) * 0.15 + Math.sin(t.phase * 7.1) * 0.08;
+    t.flameMesh.scale.set(
+      flicker * (0.9 + Math.sin(t.phase * 5.3) * 0.1),
+      flicker,
+      flicker * (0.9 + Math.sin(t.phase * 4.1) * 0.1)
+    );
+    // Slight horizontal sway
+    t.flameMesh.position.x = Math.sin(t.phase * 2.3) * 0.015;
+    t.coreMesh.position.x  = Math.sin(t.phase * 2.3) * 0.015;
+    t.coreMesh.scale.setScalar(flicker * 0.9);
+
+    // Flicker the light
+    const lightFlicker = 0.7 + Math.sin(t.phase * 4.1) * 0.2 + Math.sin(t.phase * 9.3) * 0.1;
+    t.light.intensity = t.baseIntensity * lightFlicker;
+
+    // Occasionally shift light color between orange and yellow
+    const hue = 0.06 + Math.sin(t.phase * 1.7) * 0.04; // roughly orange
+    t.light.color.setHSL(hue, 1.0, 0.55);
+  }
+}
+
+// =============================================
 // ANIMATE
 // =============================================
 function animate() {
@@ -1147,6 +1294,7 @@ function animate() {
     document.getElementById('timer').textContent = `⏱ ${formatTime(elapsedSeconds)}`;
     updatePlayer(dt);
     updateMinotaur(dt);
+    updateTorches(dt);
     checkWin();
     checkShieldProximity();
     shieldGroup.rotation.y += dt * 1.2;
