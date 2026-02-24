@@ -285,6 +285,9 @@
 // =============================================
 // LEADERBOARD — Google Apps Script + localStorage fallback
 // =============================================
+// Paste your deployed Google Apps Script URL below.
+// Scores always save locally too, so it works even without a server.
+
 const LS_SCORES_KEY  = 'theseus_scores_v2';
 const LS_SCRIPT_KEY  = 'theseus_script_url';
 
@@ -317,6 +320,7 @@ async function testScriptConnection(url) {
   }
 }
 
+// FIX: safe formatTime — handles undefined/null/NaN
 function formatTime(s) {
   const n = Number(s);
   if (isNaN(n) || n < 0) return '?:??';
@@ -325,6 +329,7 @@ function formatTime(s) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
+// Load scores from Google Sheets or localStorage
 async function loadScores() {
   const url = getScriptUrl();
   if (url) {
@@ -333,6 +338,7 @@ async function loadScores() {
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json)) {
+          // Normalize: ensure time is always a number
           const scores = json.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
                              .filter(s => !isNaN(s.time))
                              .sort((a, b) => a.time - b.time || b.lives - a.lives)
@@ -341,8 +347,9 @@ async function loadScores() {
           return scores;
         }
       }
-    } catch(e) { }
+    } catch(e) { /* fall through to local */ }
   }
+  // Local fallback
   try {
     const raw = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]');
     return raw.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }))
@@ -351,6 +358,7 @@ async function loadScores() {
   } catch(e) { return []; }
 }
 
+// Save a score
 async function saveScore(name, seconds, lives) {
   const t = Number(seconds);
   const l = Number(lives);
@@ -360,6 +368,8 @@ async function saveScore(name, seconds, lives) {
     lives: isNaN(l) ? 0 : l,
     date: new Date().toLocaleDateString('nl-NL')
   };
+
+  // Save locally first
   let scores = [];
   try { scores = JSON.parse(localStorage.getItem(LS_SCORES_KEY) || '[]'); } catch(e) {}
   scores = scores.map(s => ({ ...s, time: Number(s.time), lives: Number(s.lives) }));
@@ -367,14 +377,18 @@ async function saveScore(name, seconds, lives) {
   scores.sort((a, b) => a.time - b.time || b.lives - a.lives);
   scores = scores.slice(0, 20);
   localStorage.setItem(LS_SCORES_KEY, JSON.stringify(scores));
+
+  // Try Google Sheets
   const url = getScriptUrl();
   if (url) {
     try {
       await fetch(url, {
-        method: 'POST', mode: 'no-cors',
+        method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
       });
+      // Wait a moment then reload from server
       await new Promise(r => setTimeout(r, 1200));
       return await loadScores();
     } catch(e) {}
@@ -542,11 +556,9 @@ floorTex.repeat.set(0.25, 0.25);
 
 // =============================================
 // WORLD BUILDING
-// KEY FIX: Use THREE.DoubleSide so both faces of every wall
-// receive light — no more dark/unlit sides!
 // =============================================
-const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex, side: THREE.DoubleSide });
-const floorMat = new THREE.MeshLambertMaterial({ map: floorTex, side: THREE.DoubleSide });
+const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex });
+const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
 
 const floorGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
 const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -555,17 +567,12 @@ floorMesh.position.set(MAZE_W / 2, 0, MAZE_D / 2);
 scene.add(floorMesh);
 
 const ceilGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
-const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshLambertMaterial({ color: 0x111008, side: THREE.DoubleSide }));
+const ceil = new THREE.Mesh(ceilGeo, new THREE.MeshLambertMaterial({ color: 0x111008 }));
 ceil.rotation.x = Math.PI / 2;
 ceil.position.set(MAZE_W / 2, 5, MAZE_D / 2);
 scene.add(ceil);
 
-// Build walls as individual unit cubes for accurate normals on all faces.
-// Each wall cell gets a box, so every exposed face has proper normals
-// and will be lit correctly from all directions.
 const wallBoxes = [];
-
-// Merge adjacent wall cells into runs for performance (Z-direction runs)
 for (let z = 0; z < MAZE_D; z++) {
   let x = 0;
   while (x < MAZE_W) {
@@ -583,30 +590,7 @@ for (let z = 0; z < MAZE_D; z++) {
   }
 }
 
-// Also build X-direction wall runs — these add geometry for walls running
-// along the X axis, giving them proper side-face normals so light from
-// BOTH sides hits them correctly (the main fix for one-sided lighting).
-for (let x = 0; x < MAZE_W; x++) {
-  let z = 0;
-  while (z < MAZE_D) {
-    if (expandedMaze[z][x] === 1) {
-      const start = z;
-      while (z < MAZE_D && expandedMaze[z][x] === 1) z++;
-      const length = z - start;
-      // Only add if this run is a corridor wall (height > 1 means it's a real wall, not just covered by Z-pass)
-      if (length >= 1) {
-        const geo = new THREE.BoxGeometry(1, 5, length);
-        const mesh = new THREE.Mesh(geo, wallMat);
-        mesh.position.set(x + 0.5, 2.5, start + length / 2);
-        mesh.receiveShadow = true;
-        scene.add(mesh);
-      }
-    } else { z++; }
-  }
-}
-
-// Increase ambient light so both sides are always visible, even without a nearby torch
-const ambient = new THREE.AmbientLight(0x2a1a0c, 2.5);
+const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
 scene.add(ambient);
 
 for (let z = 3; z < MAZE_D - 3; z += 6) {
