@@ -688,6 +688,16 @@ function buildTorch(wx, wy, wz, facingDir) {
   });
 }
 
+// ---- Guaranteed torches at spawn (top-left corner, around 1,1 to 3,3) ----
+// Player spawns at (2, playerHeight, 2), so light up that corner
+buildTorch(1, 1.8, 2, 'W');   // west wall of spawn corridor
+buildTorch(3, 1.8, 1, 'N');   // north wall nearby
+
+// Also a warm welcome light right at spawn point (no mesh, just light)
+const spawnLight = new THREE.PointLight(0xff9944, 5.0, 12);
+spawnLight.position.set(2.5, 2.5, 2.5);
+scene.add(spawnLight);
+
 // Scan the maze and place torches every 5 cells in open corridors next to walls
 const TORCH_SPACING = 5;
 
