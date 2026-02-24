@@ -425,9 +425,8 @@ const keys={};
 document.addEventListener('keydown', e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
 
-// Mouse look — track movement while mouse is held down OR mouselook is locked on
-let mouseLookActive=false; // locked-on mode
-let mouseDown=false;
+// Mouse look — always active while game runs, tracks delta each frame
+let mouseLookActive=false;
 let lastMouseX=null, lastMouseY=null;
 const MOUSE_SENS=0.003;
 
@@ -435,36 +434,35 @@ const mlIndicator=document.getElementById('mouselook-indicator');
 
 function setMouseLook(on){
   mouseLookActive=on;
-  mlIndicator.textContent=on?'🎯 Muis: AAN':'🎯 Muis: UIT';
+  mlIndicator.textContent=on?'🎯 Muis: AAN (Klik=Aanvallen)':'🎯 Muis: UIT (Klik=Aan)';
   mlIndicator.classList.toggle('active',on);
   renderer.domElement.style.cursor=on?'none':'crosshair';
+  if(!on){ lastMouseX=null; lastMouseY=null; }
 }
 
-// Click canvas: toggle lock-on mouse look (left click = attack only if mouselook already active)
-renderer.domElement.addEventListener('mousedown', e=>{
-  if(!gameRunning) return;
-  mouseDown=true; lastMouseX=e.clientX; lastMouseY=e.clientY;
-  if(e.button===0){
-    if(!mouseLookActive){ setMouseLook(true); } // first click = enable
-    else { doAttack(); }                         // subsequent clicks = attack
+// Track mouse movement over the entire window when active
+window.addEventListener('mousemove', e=>{
+  if(!gameRunning||!mouseLookActive) return;
+  if(lastMouseX!==null){
+    const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY;
+    playerYaw   -= dx*MOUSE_SENS;
+    playerPitch -= dy*MOUSE_SENS;
+    playerPitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,playerPitch));
   }
-});
-renderer.domElement.addEventListener('mouseup', e=>{ mouseDown=false; lastMouseX=null; lastMouseY=null; });
-
-renderer.domElement.addEventListener('mousemove', e=>{
-  if(!gameRunning) return;
-  if(mouseLookActive || mouseDown){
-    if(lastMouseX!==null){
-      const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY;
-      playerYaw   -= dx*MOUSE_SENS;
-      playerPitch -= dy*MOUSE_SENS;
-      playerPitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,playerPitch));
-    }
-    lastMouseX=e.clientX; lastMouseY=e.clientY;
-  }
+  lastMouseX=e.clientX; lastMouseY=e.clientY;
 });
 
-mlIndicator.addEventListener('click', ()=>{ if(gameRunning) setMouseLook(!mouseLookActive); });
+// Reset last position when mouse re-enters window to avoid jump
+window.addEventListener('mouseenter', e=>{ lastMouseX=e.clientX; lastMouseY=e.clientY; });
+
+// Click canvas: first click = enable, subsequent = attack
+renderer.domElement.addEventListener('click', e=>{
+  if(!gameRunning) return;
+  if(!mouseLookActive){ setMouseLook(true); lastMouseX=e.clientX; lastMouseY=e.clientY; }
+  else { doAttack(); }
+});
+
+mlIndicator.addEventListener('click', e=>{ e.stopPropagation(); if(gameRunning) setMouseLook(!mouseLookActive); });
 
 // On-screen pad buttons
 const padKeys={ fwd:false, back:false, left:false, right:false };
