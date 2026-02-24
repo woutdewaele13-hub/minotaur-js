@@ -37,8 +37,8 @@
     #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.8); }
     #crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
     #crosshair::after  { width: 20px; height: 2px; top: 9px; left: 0; }
-    #minimap { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); display: none; }
-    #minimap canvas { border: 2px solid #d4a843; border-radius: 3px; background: rgba(0,0,0,0.85); }
+    #minimap { position: fixed; bottom: 50px; left: 18px; display: none; }
+    #minimap canvas { border: 2px solid #d4a843; border-radius: 4px; background: rgba(0,0,0,0.9); box-shadow: 0 0 12px #d4a84344; }
     #damage-flash { position: fixed; inset: 0; background: rgba(200,0,0,0.35); pointer-events: none; opacity: 0; transition: opacity 0.1s; }
     #attack-flash { position: fixed; inset: 0; background: rgba(255,220,100,0.12); pointer-events: none; opacity: 0; transition: opacity 0.15s; }
     #timer { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); color: #d4a843; font-size: 1.1rem; background: rgba(0,0,0,0.6); padding: 5px 16px; border: 1px solid #8a6030; border-radius: 3px; display: none; font-family: 'Georgia', serif; letter-spacing: 2px; }
@@ -50,6 +50,8 @@
     #win-overlay p, #lose-overlay p { color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
     /* Look controls UI */
     #look-hint { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); color: #8a6030; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 3px; display: none; letter-spacing:1px; pointer-events:none; }
+    #mouselook-indicator { position: fixed; top: 18px; right: 18px; font-size: 0.8rem; background: rgba(0,0,0,0.7); border: 1px solid #d4a843; color: #d4a843; padding: 5px 12px; border-radius: 3px; display: none; letter-spacing:1px; cursor:pointer; }
+    #mouselook-indicator.active { border-color: #80ff80; color: #80ff80; }
     /* On-screen arrow pad for turn */
     #turn-pad { position: fixed; bottom: 50px; right: 18px; display: none; flex-direction: column; align-items: center; gap: 4px; }
     .tp-row { display: flex; gap: 4px; }
@@ -64,8 +66,8 @@
   <div class="subtitle">Dood de Minotaur!</div>
   <button class="menu-btn" id="startBtn">Start Game</button>
   <div class="controls-hint">
-    WASD / Pijltjes — Lopen &nbsp;|&nbsp; Q/E of ←/→ — Kijken<br>
-    Klik / Spatie — Aanvallen &nbsp;|&nbsp; R — Schild &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
+    WASD — Lopen &nbsp;|&nbsp; Q/E — Draaien &nbsp;|&nbsp; Spatie — Aanvallen<br>
+    Klik canvas — Muis kijken aan/uit &nbsp;|&nbsp; R — Schild &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
   </div>
 </div>
 
@@ -83,11 +85,12 @@
 <div id="timer">⏱ 0:00</div>
 <div id="hearts"></div>
 <div id="shield-status">🛡 Schild Uitgerust</div>
-<div id="look-hint">Q/E = draaien | Spatie = aanvallen</div>
-<div id="controls-bar">[WASD] Lopen &nbsp;|&nbsp; [Q/E] Draaien &nbsp;|&nbsp; [Spatie/Klik] Aanvallen &nbsp;|&nbsp; [R] Schild &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu</div>
+<div id="look-hint">Klik canvas = muis kijken aan | ESC = uit</div>
+<div id="mouselook-indicator" title="Klik om muis-kijken te wisselen">🎯 Muis: UIT</div>
+<div id="controls-bar">[WASD] Lopen &nbsp;|&nbsp; [Q/E] Draaien &nbsp;|&nbsp; [Klik canvas] Muis kijken aan &nbsp;|&nbsp; [Spatie] Aanvallen &nbsp;|&nbsp; [R] Schild &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu</div>
 <div id="crosshair"></div>
 <div id="message"></div>
-<div id="minimap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
+<div id="minimap"><canvas id="mapCanvas" width="240" height="240"></canvas></div>
 <div id="damage-flash"></div>
 <div id="attack-flash"></div>
 
@@ -303,28 +306,85 @@ function addThreadPoint(pos){
 }
 
 // =============================================
-// MINIMAP
+// MINIMAP — accurate per-cell rendering
 // =============================================
 const mapCanvas=document.getElementById('mapCanvas');
 const mapCtx=mapCanvas.getContext('2d');
 let minimapVisible=false;
+
+// Pre-render the static maze layer once
+const mazeOffscreen=document.createElement('canvas');
+mazeOffscreen.width=240; mazeOffscreen.height=240;
+const mazeCtx=mazeOffscreen.getContext('2d');
+function prebakeMinimap(){
+  const W=240,H=240;
+  const cellW=W/MAZE_W, cellH=H/MAZE_D;
+  mazeCtx.fillStyle='#0d0a06'; mazeCtx.fillRect(0,0,W,H);
+  for(let z=0;z<MAZE_D;z++){
+    for(let x=0;x<MAZE_W;x++){
+      if(expandedMaze[z][x]===1){
+        mazeCtx.fillStyle='#5a4a38';
+        mazeCtx.fillRect(x*cellW, z*cellH, cellW+0.5, cellH+0.5);
+      }
+    }
+  }
+  // Draw start marker
+  mazeCtx.fillStyle='rgba(0,200,80,0.25)';
+  mazeCtx.fillRect(1*cellW, 1*cellH, 3*cellW, 3*cellH);
+}
+prebakeMinimap();
+
 function drawMinimap(){
-  const W=mapCanvas.width,H=mapCanvas.height;
-  mapCtx.clearRect(0,0,W,H);
-  mapCtx.fillStyle='rgba(0,0,0,0.85)'; mapCtx.fillRect(0,0,W,H);
-  const cellW=W/MAZE_W,cellH=H/MAZE_D;
-  mapCtx.fillStyle='#555';
-  for (let z=0;z<MAZE_D;z+=2) for (let x=0;x<MAZE_W;x+=2)
-    if(expandedMaze[z][x]===1) mapCtx.fillRect(x*cellW,z*cellH,cellW*2,cellH*2);
-  mapCtx.fillStyle='rgba(200,0,0,0.6)';
-  for (const tp of threadPoints) mapCtx.fillRect(tp.position.x*cellW-1,tp.position.z*cellH-1,2,2);
-  if (!shieldPickedUp){mapCtx.fillStyle='#ffff00';mapCtx.beginPath();mapCtx.arc(shieldGroup.position.x*cellW,shieldGroup.position.z*cellH,3,0,Math.PI*2);mapCtx.fill();}
-  mapCtx.fillStyle=minotaurDead?'#888':'#ff2020'; mapCtx.beginPath();
-  mapCtx.arc(minotaurGroup.position.x*cellW,minotaurGroup.position.z*cellH,4,0,Math.PI*2); mapCtx.fill();
-  mapCtx.fillStyle='#00ff80';
-  mapCtx.save(); mapCtx.translate(playerPos.x*cellW,playerPos.z*cellH); mapCtx.rotate(-playerYaw);
-  mapCtx.beginPath(); mapCtx.moveTo(0,-5); mapCtx.lineTo(3,4); mapCtx.lineTo(-3,4); mapCtx.closePath(); mapCtx.fill();
+  const W=mapCanvas.width, H=mapCanvas.height;
+  const cellW=W/MAZE_W, cellH=H/MAZE_D;
+  // Draw static maze
+  mapCtx.drawImage(mazeOffscreen,0,0);
+  // Ariadne thread
+  for(const tp of threadPoints){
+    mapCtx.fillStyle='rgba(220,30,30,0.7)';
+    mapCtx.fillRect(tp.position.x*cellW-0.5, tp.position.z*cellH-0.5, 2, 2);
+  }
+  // Shield icon
+  if(!shieldPickedUp){
+    mapCtx.fillStyle='#ffe840';
+    mapCtx.beginPath();
+    mapCtx.arc(shieldGroup.position.x*cellW, shieldGroup.position.z*cellH, 3.5, 0, Math.PI*2);
+    mapCtx.fill();
+    mapCtx.strokeStyle='#a07010'; mapCtx.lineWidth=1; mapCtx.stroke();
+  }
+  // Minotaur
+  if(!minotaurDead){
+    mapCtx.fillStyle='#ff2222';
+    mapCtx.beginPath();
+    mapCtx.arc(minotaurGroup.position.x*cellW, minotaurGroup.position.z*cellH, 4.5, 0, Math.PI*2);
+    mapCtx.fill();
+    mapCtx.strokeStyle='#880000'; mapCtx.lineWidth=1.5; mapCtx.stroke();
+  }
+  // Player — arrow + view cone
+  const px=playerPos.x*cellW, pz=playerPos.z*cellH;
+  // View cone
+  mapCtx.save();
+  mapCtx.translate(px, pz);
+  mapCtx.rotate(-playerYaw);
+  mapCtx.beginPath();
+  mapCtx.moveTo(0,0);
+  const coneLen=28, halfAngle=Math.PI/4;
+  mapCtx.lineTo(Math.sin(-halfAngle)*coneLen, -Math.cos(-halfAngle)*coneLen);
+  mapCtx.lineTo(Math.sin( halfAngle)*coneLen, -Math.cos( halfAngle)*coneLen);
+  mapCtx.closePath();
+  mapCtx.fillStyle='rgba(0,255,128,0.08)'; mapCtx.fill();
+  mapCtx.strokeStyle='rgba(0,255,128,0.25)'; mapCtx.lineWidth=1; mapCtx.stroke();
+  // Arrow body
+  mapCtx.beginPath();
+  mapCtx.moveTo(0,-7); mapCtx.lineTo(4,4); mapCtx.lineTo(0,1); mapCtx.lineTo(-4,4); mapCtx.closePath();
+  mapCtx.fillStyle='#00ff80'; mapCtx.fill();
+  mapCtx.strokeStyle='#004422'; mapCtx.lineWidth=1; mapCtx.stroke();
   mapCtx.restore();
+  // Legend
+  mapCtx.font='8px Georgia';
+  mapCtx.fillStyle='rgba(0,255,128,0.9)'; mapCtx.fillText('▲ Jij',4,H-24);
+  mapCtx.fillStyle='rgba(255,30,30,0.9)';  mapCtx.fillText('● Minotaur',4,H-14);
+  mapCtx.fillStyle='rgba(255,232,64,0.9)'; mapCtx.fillText('● Schild',4,H-4);
 }
 
 // =============================================
@@ -359,11 +419,52 @@ const DETECTION_RANGE=14, ATTACK_RANGE=2.5;
 camera.position.copy(playerPos);
 
 // =============================================
-// INPUT — keyboard (no pointer lock needed)
+// INPUT — keyboard + canvas mouse look (no pointer lock)
 // =============================================
 const keys={};
-document.addEventListener('keydown', e=>{ keys[e.code]=true; e.preventDefault(); });
+document.addEventListener('keydown', e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
+
+// Mouse look — track movement while mouse is held down OR mouselook is locked on
+let mouseLookActive=false; // locked-on mode
+let mouseDown=false;
+let lastMouseX=null, lastMouseY=null;
+const MOUSE_SENS=0.003;
+
+const mlIndicator=document.getElementById('mouselook-indicator');
+
+function setMouseLook(on){
+  mouseLookActive=on;
+  mlIndicator.textContent=on?'🎯 Muis: AAN':'🎯 Muis: UIT';
+  mlIndicator.classList.toggle('active',on);
+  renderer.domElement.style.cursor=on?'none':'crosshair';
+}
+
+// Click canvas: toggle lock-on mouse look (left click = attack only if mouselook already active)
+renderer.domElement.addEventListener('mousedown', e=>{
+  if(!gameRunning) return;
+  mouseDown=true; lastMouseX=e.clientX; lastMouseY=e.clientY;
+  if(e.button===0){
+    if(!mouseLookActive){ setMouseLook(true); } // first click = enable
+    else { doAttack(); }                         // subsequent clicks = attack
+  }
+});
+renderer.domElement.addEventListener('mouseup', e=>{ mouseDown=false; lastMouseX=null; lastMouseY=null; });
+
+renderer.domElement.addEventListener('mousemove', e=>{
+  if(!gameRunning) return;
+  if(mouseLookActive || mouseDown){
+    if(lastMouseX!==null){
+      const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY;
+      playerYaw   -= dx*MOUSE_SENS;
+      playerPitch -= dy*MOUSE_SENS;
+      playerPitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,playerPitch));
+    }
+    lastMouseX=e.clientX; lastMouseY=e.clientY;
+  }
+});
+
+mlIndicator.addEventListener('click', ()=>{ if(gameRunning) setMouseLook(!mouseLookActive); });
 
 // On-screen pad buttons
 const padKeys={ fwd:false, back:false, left:false, right:false };
@@ -376,9 +477,6 @@ function setupPadBtn(id, key) {
 setupPadBtn('tp-fwd','fwd'); setupPadBtn('tp-back','back');
 setupPadBtn('tp-left','left'); setupPadBtn('tp-right','right');
 document.getElementById('tp-atk').addEventListener('pointerdown', e=>{ doAttack(); e.preventDefault(); });
-
-// Mouse click to attack (no pointer lock required)
-renderer.domElement.addEventListener('click', ()=>{ if(gameRunning) doAttack(); });
 
 // =============================================
 // COLLISION
@@ -509,6 +607,8 @@ function startGame(){
   document.getElementById('lose-overlay').style.display='none';
   document.getElementById('turn-pad').style.display='flex';
   document.getElementById('look-hint').style.display='block';
+  document.getElementById('mouselook-indicator').style.display='block';
+  setMouseLook(false);
   shieldGroup.visible=true;
 }
 document.getElementById('startBtn').addEventListener('click', startGame);
@@ -522,15 +622,17 @@ document.addEventListener('keydown', e=>{
       else showMessage('Kom dichter bij het schild!',1500);
     } else { hasShield=false; shieldPickedUp=false; shieldGroup.position.set(playerPos.x+1,1,playerPos.z); shieldGroup.visible=true; document.getElementById('shield-status').style.display='none'; }
   }
-  if(e.code==='Escape'){ gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('menu').style.display='flex'; }
+  if(e.code==='Escape'){ setMouseLook(false); gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('mouselook-indicator').style.display='none'; document.getElementById('menu').style.display='flex'; }
 });
 
 function checkWin(){
   if(minotaurDead&&playerPos.distanceTo(new THREE.Vector3(2,playerHeight,2))<6){
     gameRunning=false; gameWon=true;
     elapsedSeconds=(performance.now()-gameStartTime)/1000;
+    setMouseLook(false);
     document.getElementById('timer').style.display='none';
     document.getElementById('turn-pad').style.display='none';
+    document.getElementById('mouselook-indicator').style.display='none';
     document.getElementById('win-time-text').textContent=`Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
     document.getElementById('win-overlay').style.display='flex';
   }
@@ -539,7 +641,7 @@ function checkShieldProximity(){
   if(!shieldPickedUp&&playerPos.distanceTo(shieldGroup.position)<5)
     document.getElementById('controls-bar').textContent=`🛡 Schild vlakbij! [R] om op te pakken`;
   else
-    document.getElementById('controls-bar').textContent='[WASD] Lopen  |  [Q/E] Draaien  |  [Spatie/Klik] Aanvallen  |  [R] Schild  |  [T] Kaart  |  [ESC] Menu';
+    document.getElementById('controls-bar').textContent='[WASD] Lopen  |  [Q/E] Draaien  |  [Klik] Muis kijken  |  [Spatie] Aanvallen  |  [R] Schild  |  [T] Kaart  |  [ESC] Menu';
 }
 
 // =============================================
