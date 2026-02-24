@@ -489,7 +489,7 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x000000, 0.13);
+scene.fog = new THREE.FogExp2(0x000000, 0.07);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 120);
 
@@ -544,8 +544,8 @@ floorTex.repeat.set(0.25, 0.25);
 // =============================================
 // WORLD BUILDING
 // =============================================
-const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex, color: 0xccbbaa });
-const floorMat = new THREE.MeshLambertMaterial({ map: floorTex, color: 0xaa9988 });
+const wallMat  = new THREE.MeshLambertMaterial({ map: wallTex });
+const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
 
 const floorGeo = new THREE.PlaneGeometry(MAZE_W, MAZE_D);
 const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -577,7 +577,7 @@ for (let z = 0; z < MAZE_D; z++) {
   }
 }
 
-const ambient = new THREE.AmbientLight(0x050302, 0.8);
+const ambient = new THREE.AmbientLight(0x221408, 2.5);
 scene.add(ambient);
 
 // No ceiling lights — torches are the ONLY illumination source for true labyrinth atmosphere
@@ -689,14 +689,16 @@ function buildTorch(wx, wy, wz, facingDir) {
 }
 
 // ---- Guaranteed torches at spawn (top-left corner, around 1,1 to 3,3) ----
-// Player spawns at (2, playerHeight, 2), so light up that corner
-buildTorch(1, 1.8, 2, 'W');   // west wall of spawn corridor
-buildTorch(3, 1.8, 1, 'N');   // north wall nearby
+buildTorch(1, 1.8, 2, 'W');
+buildTorch(3, 1.8, 1, 'N');
 
-// Also a warm welcome light right at spawn point (no mesh, just light)
-const spawnLight = new THREE.PointLight(0xff9944, 5.0, 12);
+// Strong spawn light so player can ALWAYS see on start
+const spawnLight = new THREE.PointLight(0xff9944, 8.0, 20);
 spawnLight.position.set(2.5, 2.5, 2.5);
 scene.add(spawnLight);
+const spawnLight2 = new THREE.PointLight(0xff7722, 5.0, 15);
+spawnLight2.position.set(4, 2.5, 4);
+scene.add(spawnLight2);
 
 // Scan the maze and place torches every 5 cells in open corridors next to walls
 const TORCH_SPACING = 5;
