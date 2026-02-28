@@ -16,7 +16,41 @@
       z-index: 100; pointer-events: all;
     }
     #menu h1 { font-size: 3.5rem; color: #d4a843; text-shadow: 0 0 30px #d4a84388, 2px 2px 0 #4a2000; letter-spacing: 4px; margin-bottom: 0.3rem; }
-    #menu .subtitle { font-size: 1.2rem; color: #b06030; letter-spacing: 2px; margin-bottom: 3rem; }
+    #menu .subtitle { font-size: 1.2rem; color: #b06030; letter-spacing: 2px; margin-bottom: 2rem; }
+
+    #menu-body {
+      display: flex; gap: 3rem; align-items: flex-start;
+      max-width: 860px; width: 100%; padding: 0 2rem;
+    }
+    #menu-left {
+      display: flex; flex-direction: column; align-items: center; flex: 1;
+    }
+
+    /* Title-screen leaderboard */
+    #menu-lb {
+      width: 300px; flex-shrink: 0;
+      background: rgba(10,5,0,0.85);
+      border: 2px solid #d4a843;
+      border-radius: 4px;
+      padding: 1rem;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+    #menu-lb-title {
+      color: #d4a843; font-size: 1rem; letter-spacing: 3px;
+      text-align: center; margin-bottom: 0.8rem;
+      text-shadow: 0 0 12px #d4a84366;
+      border-bottom: 1px solid #4a2a00; padding-bottom: 0.5rem;
+    }
+    #menu-lb-list { font-size: 0.88rem; color: #f5d090; line-height: 1.9; }
+    #menu-lb-list .lb-row {
+      display: flex; justify-content: space-between;
+      padding: 2px 0; border-bottom: 1px solid #2a1800;
+    }
+    #menu-lb-list .lb-rank  { color: #d4a843; width: 28px; }
+    #menu-lb-list .lb-name  { flex: 1; }
+    #menu-lb-list .lb-score { color: #80ff80; }
+    #menu-lb-list .lb-empty { color: #6a4a20; text-align: center; padding: 1rem 0; font-style: italic; }
     .menu-btn {
       background: linear-gradient(135deg, #8B2500, #3a0e00);
       border: 2px solid #d4a843; color: #f5d090;
@@ -162,12 +196,24 @@
 <div id="menu">
   <h1>⚔ THESEUS ⚔</h1>
   <div class="subtitle">Dood de Minotaur!</div>
-  <button class="menu-btn" id="startBtn">Start Game</button>
-  <div class="controls-hint">
-    WASD — Lopen &nbsp;|&nbsp; Q/E — Draaien &nbsp;|&nbsp; Spatie — Aanvallen<br>
-    F — Zware Slag &nbsp;|&nbsp; G — Ontwijkrol &nbsp;|&nbsp; V — Pareer &nbsp;|&nbsp; C — Wervelwind<br>
-    X — Schild Bash &nbsp;|&nbsp; Z — Executie (laag HP)<br>
-    Klik canvas — Muis kijken &nbsp;|&nbsp; R — Uitrusting &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
+
+  <div id="menu-body">
+    <!-- Left: buttons + controls -->
+    <div id="menu-left">
+      <button class="menu-btn" id="startBtn">Start Game</button>
+      <div class="controls-hint">
+        WASD — Lopen &nbsp;|&nbsp; Q/E — Draaien &nbsp;|&nbsp; Spatie — Aanvallen<br>
+        F — Zware Slag &nbsp;|&nbsp; G — Ontwijkrol &nbsp;|&nbsp; V — Pareer &nbsp;|&nbsp; C — Wervelwind<br>
+        X — Schild Bash &nbsp;|&nbsp; Z — Executie (laag HP)<br>
+        Klik canvas — Muis kijken &nbsp;|&nbsp; R — Uitrusting &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
+      </div>
+    </div>
+
+    <!-- Right: highscores panel -->
+    <div id="menu-lb">
+      <div id="menu-lb-title">🏆 HIGHSCORES</div>
+      <div id="menu-lb-list">Laden...</div>
+    </div>
   </div>
 </div>
 
@@ -1383,45 +1429,62 @@ function minotaurExecuteAttack(type){
   }
 }
 
-function minotaurAttack(isCharge=false){
+function minotaurAttack(type='swipe'){
   if(gameOver||invincibleTimer>0) return;
   minotaurAttackCooldown= minotaurEnraged ? 1.2 : 2.0;
-  invincibleTimer=1.5;
 
-  // Parry check — perfect timing reward
+  // ── Stomp: AoE, hits regardless of dodge direction ──
+  const isAoE = type==='stomp';
+  const isCharge = type==='charge';
+  const isLunge  = type==='lunge';
+
+  // Parry check
   if(parryActive){
     parryActive=false; parryTimer=0;
-    flashParry();
-    startCameraShake(0.06, 0.4);
-    // Stun minotaur: push back + free hit window
+    flashParry(); startCameraShake(0.06, 0.4);
     const kb=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
     minotaurGroup.position.addScaledVector(kb, 4);
-    minotaurAttackCooldown+=2; // extra stun
-    showMessage('✨ PERFECTE PAREER! Aanval gereed!', 1800);
-    invincibleTimer=0.5; // still briefly safe
+    minotaurAttackCooldown+=2.5;
+    applyStun(3.0); // parry = longer stun
+    showMessage('✨ PERFECTE PAREER! Minotaur verdoofd voor 3s!', 2000);
+    invincibleTimer=0.5;
     return;
   }
 
+  // Dodge i-frames dodge non-AoE attacks
+  if(dodgeIframes>0 && !isAoE){
+    showMessage('💨 Ontwijkt!', 800);
+    return;
+  }
+
+  // Show attack type warning
+  if(type==='stomp') showMessage('🌍 STAMP! Niet bij hem staan!',600);
+  else if(type==='lunge') showMessage('⚡ UITVAL!',600);
+  else if(type==='charge') showMessage('🐂 CHARGE!',600);
+
+  invincibleTimer=1.5;
   let blockChance = 0;
   if(hasShield)  blockChance += 0.50;
   if(hasHelmet)  blockChance += 0.20;
   if(hasChest)   blockChance += 0.20;
   if(hasBoots)   blockChance += 0.20;
-  // Charge attacks are harder to block
   if(isCharge) blockChance *= 0.5;
+  if(isAoE)    blockChance *= 0.4; // stomp is hard to block
+  if(isLunge)  blockChance *= 0.7;
   blockChance = Math.min(blockChance, 0.90);
 
   if(Math.random() < blockChance){
     const blocker = hasShield ? '🛡 Schild' : hasChest ? '🦺 Borstpantser' : hasHelmet ? '⛑ Helm' : '👢 Laarzen';
-    showMessage(`${blocker} geblokkeerd!${isCharge?' (CHARGE)':''}`,1000);
-    startCameraShake(0.03,0.2);
-    return;
+    showMessage(`${blocker} geblokkeerd! (${type})`,1000);
+    startCameraShake(0.03,0.2); return;
   }
 
   resetCombo();
   playerLives--; updateHearts(); flashDamage();
-  startCameraShake(isCharge?0.1:0.06, isCharge?0.5:0.3);
-  showMessage(playerLives>0?`${isCharge?'⚡ CHARGE — ':''}Geraakt! Leven: ${playerLives}`:'',1200);
+  const shakeAmt = isCharge?0.1 : isAoE?0.08 : isLunge?0.07 : 0.06;
+  startCameraShake(shakeAmt, isCharge?0.5:0.3);
+  const typeLabel = isCharge?'⚡ CHARGE': isAoE?'🌍 STAMP': isLunge?'⚡ UITVAL': '';
+  showMessage(playerLives>0?`${typeLabel ? typeLabel+' — ':''}Geraakt! Leven: ${playerLives}`:'',1200);
   if(playerLives<=0){ gameOver=true; gameRunning=false; document.getElementById('lose-overlay').style.display='flex'; }
 }
 
@@ -1430,36 +1493,46 @@ function minotaurAttack(isCharge=false){
 // =============================================
 const TURN_SPEED=1.8;
 function updatePlayer(dt){
-  // ── Skill key press (single-fire via keys state) ──
+  // ── Skill key press ──
   if(keys['KeyF']){ keys['KeyF']=false; doHeavyStrike(); }
   if(keys['KeyG']){ keys['KeyG']=false; doDashAttack(); }
   if(keys['KeyV']){ keys['KeyV']=false; doParry(); }
   if(keys['KeyC']){ keys['KeyC']=false; doWhirlwind(); }
+  if(keys['KeyX']){ keys['KeyX']=false; doShieldBash(); }
+  if(keys['KeyZ']){ keys['KeyZ']=false; doExecute(); }
 
   // ── Cooldown ticks ──
   cdHeavy=Math.max(0,cdHeavy-dt);
   cdDash =Math.max(0,cdDash -dt);
   cdParry=Math.max(0,cdParry-dt);
   cdWhirl=Math.max(0,cdWhirl-dt);
+  cdBash =Math.max(0,cdBash -dt);
+  cdExec =Math.max(0,cdExec -dt);
   attackCooldown=Math.max(0,attackCooldown-dt);
 
   // ── Parry window tick ──
   if(parryActive){ parryTimer-=dt; if(parryTimer<=0){ parryActive=false; } }
 
+  // ── Dodge i-frames tick ──
+  if(dodgeIframes>0){
+    dodgeIframes-=dt;
+    if(dodgeIframes<0) dodgeIframes=0;
+  }
+
   // ── Combo reset ──
   if(comboCount>0){ comboResetTimer-=dt; if(comboResetTimer<=0) resetCombo(); }
 
-  // ── Stamina regen (slower while moving, faster while still) ──
+  // ── Stamina regen ──
   const isMoving=(keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||padKeys.fwd||padKeys.back);
   stamina=Math.min(MAX_STAMINA, stamina+STAMINA_REGEN*(isMoving?0.6:1.0)*dt);
-  updateStaminaHUD(); updateSkillHUD();
+  updateStaminaHUD(); updateSkillHUD(); updateStatusHUD();
 
   // ── Camera shake ──
   if(shakeTimer>0){
     shakeTimer-=dt;
-    camera.position.x+=playerPos.x+(Math.random()-0.5)*shakeIntensity;
-    camera.position.y+=playerPos.y+(Math.random()-0.5)*shakeIntensity;
-    camera.position.z+=playerPos.z+(Math.random()-0.5)*shakeIntensity;
+    camera.position.x=playerPos.x+(Math.random()-0.5)*shakeIntensity;
+    camera.position.y=playerPos.y+(Math.random()-0.5)*shakeIntensity;
+    camera.position.z=playerPos.z+(Math.random()-0.5)*shakeIntensity;
   }
 
   if(keys['KeyQ']||padKeys.left)  playerYaw+=TURN_SPEED*dt;
@@ -1531,6 +1604,20 @@ function renderRows(scores,highlightName){
     return `<div class="lb-row ${mine?'lb-mine':''}"><span class="lb-rank">${medal}</span><span class="lb-name">${s.name}</span><span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span></div>`;
   }).join('');
 }
+
+async function renderMenuLeaderboard(){
+  const el=document.getElementById('menu-lb-list');
+  if(!el) return;
+  const scores=await loadScores();
+  if(!scores.length){
+    el.innerHTML='<div class="lb-empty">Nog geen scores.<br>Wees de eerste held!</div>';
+    return;
+  }
+  el.innerHTML=scores.slice(0,10).map((s,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    return `<div class="lb-row"><span class="lb-rank">${medal}</span><span class="lb-name">${s.name}</span><span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span></div>`;
+  }).join('');
+}
 function toggleLeaderboard(){ const panel=document.getElementById('lb-panel'); const visible=panel.style.display==='block'; panel.style.display=visible?'none':'block'; if(!visible) renderLeaderboard(null); }
 document.getElementById('submit-score-btn').addEventListener('click',async()=>{
   const name=document.getElementById('player-name').value.trim()||'Anoniem';
@@ -1540,6 +1627,7 @@ document.getElementById('submit-score-btn').addEventListener('click',async()=>{
   document.getElementById('score-saved').style.display='block';
   document.getElementById('lb-panel').style.display='block';
   renderLeaderboard(name);
+  renderMenuLeaderboard();
 });
 
 // =============================================
@@ -1559,10 +1647,14 @@ function startGame(){
   hasChest=false;  chestPickedUp=false;
   hasBoots=false;  bootsPickedUp=false;
   // Combat reset
-  stamina=MAX_STAMINA; cdHeavy=0; cdDash=0; cdParry=0; cdWhirl=0;
-  parryActive=false; parryTimer=0; dashVelX=0; dashVelZ=0; dashTimer=0;
+  stamina=MAX_STAMINA; cdHeavy=0; cdDash=0; cdParry=0; cdWhirl=0; cdBash=0; cdExec=0;
+  parryActive=false; parryTimer=0; dashVelX=0; dashVelZ=0; dashTimer=0; dodgeIframes=0;
   comboCount=0; comboResetTimer=0; shakeTimer=0; shakeIntensity=0;
+  bleedStacks=0; bleedTimer=0; bleedTickTimer=0;
+  minotaurStunned=false; stunTimer=0;
+  telegraphActive=false; telegraphTimer=0;
   minotaurEnraged=false; charging=false; chargeTimer=0;
+  document.getElementById('telegraph').style.opacity='0';
   MINOTAUR_CHASE_SPEED=MINOTAUR_CHASE_SPEED_BASE;
   document.getElementById('shield-status').style.display='none';
   document.getElementById('hud-helm').style.display='none';
@@ -1643,7 +1735,7 @@ document.addEventListener('keydown', e=>{
       else showMessage('Geen uitrusting in de buurt. [R] om op te pakken.',1800);
     }
   }
-  if(e.code==='Escape'){ setMouseLook(false); gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('mouselook-indicator').style.display='none'; document.getElementById('stamina-wrap').style.display='none'; document.getElementById('skill-bar').style.display='none'; document.getElementById('minotaur-hpbar').style.display='none'; document.getElementById('combo').style.display='none'; document.getElementById('menu').style.display='flex'; }
+  if(e.code==='Escape'){ setMouseLook(false); gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('mouselook-indicator').style.display='none'; document.getElementById('stamina-wrap').style.display='none'; document.getElementById('skill-bar').style.display='none'; document.getElementById('minotaur-hpbar').style.display='none'; document.getElementById('combo').style.display='none'; document.getElementById('menu').style.display='flex'; renderMenuLeaderboard(); }
 });
 
 function checkWin(){
@@ -1703,6 +1795,9 @@ function animate(){
   renderer.render(swordScene,swordCamera);
 }
 animate();
+
+// Load scores into title screen on startup
+renderMenuLeaderboard();
 </script>
 </body>
 </html>
