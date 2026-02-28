@@ -15,42 +15,43 @@
       align-items: center; justify-content: center;
       z-index: 100; pointer-events: all;
     }
-    #menu h1 { font-size: 3.5rem; color: #d4a843; text-shadow: 0 0 30px #d4a84388, 2px 2px 0 #4a2000; letter-spacing: 4px; margin-bottom: 0.3rem; }
-    #menu .subtitle { font-size: 1.2rem; color: #b06030; letter-spacing: 2px; margin-bottom: 2rem; }
+    #menu h1 { font-size: 3.2rem; color: #d4a843; text-shadow: 0 0 30px #d4a84388, 2px 2px 0 #4a2000; letter-spacing: 4px; margin-bottom: 0.2rem; }
+    #menu .subtitle { font-size: 1.1rem; color: #b06030; letter-spacing: 2px; margin-bottom: 1.5rem; }
 
     #menu-body {
-      display: flex; gap: 3rem; align-items: flex-start;
-      max-width: 860px; width: 100%; padding: 0 2rem;
+      display: flex; flex-direction: row; gap: 2.5rem; align-items: flex-start;
+      width: 900px; max-width: 96vw;
     }
     #menu-left {
-      display: flex; flex-direction: column; align-items: center; flex: 1;
+      display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 220px;
     }
 
     /* Title-screen leaderboard */
     #menu-lb {
-      width: 300px; flex-shrink: 0;
-      background: rgba(10,5,0,0.85);
+      width: 320px; flex-shrink: 0;
+      background: linear-gradient(160deg, rgba(20,10,0,0.97) 0%, rgba(10,4,0,0.97) 100%);
       border: 2px solid #d4a843;
-      border-radius: 4px;
-      padding: 1rem;
-      max-height: 380px;
-      overflow-y: auto;
+      border-radius: 6px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 0 24px #d4a84322, inset 0 0 30px rgba(0,0,0,0.5);
     }
     #menu-lb-title {
-      color: #d4a843; font-size: 1rem; letter-spacing: 3px;
-      text-align: center; margin-bottom: 0.8rem;
-      text-shadow: 0 0 12px #d4a84366;
+      color: #d4a843; font-size: 0.95rem; letter-spacing: 3px;
+      text-align: center; margin-bottom: 0.7rem;
+      text-shadow: 0 0 14px #d4a843aa;
       border-bottom: 1px solid #4a2a00; padding-bottom: 0.5rem;
     }
-    #menu-lb-list { font-size: 0.88rem; color: #f5d090; line-height: 1.9; }
+    #menu-lb-list { font-size: 0.85rem; color: #f5d090; line-height: 1; }
     #menu-lb-list .lb-row {
-      display: flex; justify-content: space-between;
-      padding: 2px 0; border-bottom: 1px solid #2a1800;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 5px 0; border-bottom: 1px solid #2a1800;
     }
-    #menu-lb-list .lb-rank  { color: #d4a843; width: 28px; }
-    #menu-lb-list .lb-name  { flex: 1; }
-    #menu-lb-list .lb-score { color: #80ff80; }
-    #menu-lb-list .lb-empty { color: #6a4a20; text-align: center; padding: 1rem 0; font-style: italic; }
+    #menu-lb-list .lb-row:last-child { border-bottom: none; }
+    #menu-lb-list .lb-rank  { color: #d4a843; width: 28px; font-size: 0.9rem; }
+    #menu-lb-list .lb-name  { flex: 1; color: #e8d090; }
+    #menu-lb-list .lb-score { color: #80ff80; font-size: 0.82rem; }
+    #menu-lb-list .lb-empty { color: #7a5a28; text-align: center; padding: 1.5rem 0;
+      font-style: italic; font-size: 0.85rem; line-height: 1.6; }
     .menu-btn {
       background: linear-gradient(135deg, #8B2500, #3a0e00);
       border: 2px solid #d4a843; color: #f5d090;
@@ -1606,16 +1607,22 @@ function renderRows(scores,highlightName){
 }
 
 async function renderMenuLeaderboard(){
-  const el=document.getElementById('menu-lb-list');
+  const el = document.getElementById('menu-lb-list');
   if(!el) return;
-  const scores=await loadScores();
+  el.innerHTML = '<div class="lb-empty">⏳ Laden...</div>';
+  const scores = await loadScores();
   if(!scores.length){
-    el.innerHTML='<div class="lb-empty">Nog geen scores.<br>Wees de eerste held!</div>';
+    el.innerHTML = '<div class="lb-empty">Nog geen scores.<br>Wees de eerste held van Athene!</div>';
     return;
   }
-  el.innerHTML=scores.slice(0,10).map((s,i)=>{
-    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
-    return `<div class="lb-row"><span class="lb-rank">${medal}</span><span class="lb-name">${s.name}</span><span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span></div>`;
+  el.innerHTML = scores.slice(0,10).map((s,i)=>{
+    const medal = i===0?'🥇': i===1?'🥈': i===2?'🥉': `${i+1}.`;
+    const t = typeof formatTime === 'function' ? formatTime(s.time) : s.time;
+    return `<div class="lb-row">
+      <span class="lb-rank">${medal}</span>
+      <span class="lb-name">${s.name}</span>
+      <span class="lb-score">${t}&nbsp;❤${s.lives}</span>
+    </div>`;
   }).join('');
 }
 function toggleLeaderboard(){ const panel=document.getElementById('lb-panel'); const visible=panel.style.display==='block'; panel.style.display=visible?'none':'block'; if(!visible) renderLeaderboard(null); }
@@ -1795,6 +1802,17 @@ function animate(){
   renderer.render(swordScene,swordCamera);
 }
 animate();
+
+// Seed demo scores so title screen always shows content on first run
+if(localScores.length===0){
+  localScores=[
+    {name:'Theseus',    time:142, lives:3, date:'01/01/2025'},
+    {name:'Ariadne',    time:198, lives:2, date:'01/01/2025'},
+    {name:'Hercules',   time:231, lives:1, date:'01/01/2025'},
+    {name:'Perseus',    time:275, lives:2, date:'01/01/2025'},
+    {name:'Odysseus',   time:312, lives:1, date:'01/01/2025'},
+  ];
+}
 
 // Load scores into title screen on startup
 renderMenuLeaderboard();
