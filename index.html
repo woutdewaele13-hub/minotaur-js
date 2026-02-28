@@ -61,6 +61,100 @@
     #lb-list .lb-name { flex:1; }
     #lb-list .lb-score { color:#80ff80; }
     #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
+
+    /* Stamina bar */
+    #stamina-wrap { position:fixed; bottom:42px; left:50%; transform:translateX(-50%);
+      width:240px; pointer-events:none; display:none; }
+    #stamina-label { color:#80d0ff; font-size:0.72rem; letter-spacing:2px; text-align:center;
+      text-shadow:0 0 8px #40a8ff; margin-bottom:3px; }
+    #stamina-bg { width:100%; height:8px; background:rgba(0,0,0,0.7);
+      border:1px solid #2a5a8a; border-radius:4px; overflow:hidden; }
+    #stamina-fill { height:100%; width:100%; background:linear-gradient(90deg,#2080c0,#60c8ff);
+      border-radius:4px; transition:width 0.08s; }
+
+    /* Skill hotbar — now horizontal at bottom centre */
+    #skill-bar { position:fixed; bottom:55px; left:50%; transform:translateX(-50%);
+      display:none; flex-direction:row; gap:6px; pointer-events:none; }
+    .skill-slot {
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+      background:rgba(0,0,0,0.75); border:1px solid #4a3010;
+      border-radius:5px; padding:4px 6px; min-width:52px;
+      transition: border-color 0.2s;
+    }
+    .skill-slot.ready { border-color:#d4a843; }
+    .skill-slot.locked { opacity:0.35; }
+    .skill-key  { background:rgba(60,40,0,0.8); border:1px solid #6a5020;
+      border-radius:3px; color:#d4a843; font-size:0.68rem;
+      padding:1px 4px; text-align:center; }
+    .skill-icon { font-size:1.15rem; line-height:1.2; }
+    .skill-name { color:#c8a060; font-size:0.6rem; letter-spacing:0.5px; text-align:center; white-space:nowrap; }
+    .skill-cd   { font-size:0.62rem; color:#ff8040; text-align:center; min-height:10px; }
+    .skill-slot.ready .skill-name { color:#ffe080; }
+    .skill-slot.ready .skill-key  { border-color:#d4a843; color:#fff; }
+
+    /* Combo counter */
+    #combo { position:fixed; top:50%; right:24px; transform:translateY(-50%);
+      pointer-events:none; display:none; text-align:right; }
+    #combo-count { font-size:3.5rem; color:#ff8020; font-family:Georgia,serif;
+      text-shadow:0 0 20px #ff4000aa, 2px 2px 0 #3a0800;
+      line-height:1; transition:transform 0.1s; }
+    #combo-label { font-size:0.8rem; color:#d4a843; letter-spacing:3px; }
+    #combo-finisher { font-size:0.7rem; color:#ff4040; letter-spacing:2px; margin-top:2px; }
+
+    /* Status effect icons (bleed, stun shown under hearts) */
+    #status-icons { position:fixed; top:58px; left:18px;
+      display:flex; gap:6px; pointer-events:none; }
+    .status-icon { font-size:1.1rem; background:rgba(0,0,0,0.6);
+      border-radius:3px; padding:2px 6px; border:1px solid #333;
+      letter-spacing:1px; font-family:Georgia,serif; font-size:0.8rem; }
+    #si-bleed  { color:#ff4040; border-color:#8a1010; display:none; }
+    #si-stun   { color:#ffff40; border-color:#8a8a00; display:none; }
+    #si-dodge  { color:#40c8ff; border-color:#006888; display:none; }
+
+    /* Parry flash (blue) */
+    #parry-flash { position:fixed; inset:0; background:rgba(80,160,255,0.3);
+      pointer-events:none; opacity:0; transition:opacity 0.12s; }
+
+    /* Execute flash (gold) */
+    #execute-flash { position:fixed; inset:0; background:rgba(255,200,0,0.3);
+      pointer-events:none; opacity:0; transition:opacity 0.12s; }
+
+    /* Dodge flash (cyan) */
+    #dodge-flash { position:fixed; inset:0; background:rgba(0,200,255,0.15);
+      pointer-events:none; opacity:0; transition:opacity 0.1s; }
+
+    /* Rage flash (red pulsing when minotaur enraged) */
+    #rage-flash { position:fixed; inset:0;
+      background:radial-gradient(ellipse at center, transparent 40%, rgba(200,0,0,0.25) 100%);
+      pointer-events:none; opacity:0; }
+
+    /* Telegraph overlay — shows when minotaur is winding up */
+    #telegraph { position:fixed; inset:0;
+      background:radial-gradient(ellipse at center, transparent 30%, rgba(255,60,0,0.18) 100%);
+      pointer-events:none; opacity:0; transition:opacity 0.15s; }
+
+    /* Minotaur health bar */
+    #minotaur-hpbar { position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      width:300px; display:none; pointer-events:none; margin-top:40px; }
+    #mhp-label { color:#ff4040; font-size:0.75rem; letter-spacing:2px; text-align:center;
+      text-shadow:0 0 8px #ff0000; margin-bottom:3px; }
+    #mhp-bg { width:100%; height:12px; background:rgba(0,0,0,0.7);
+      border:1px solid #8a1010; border-radius:5px; overflow:hidden; position:relative; }
+    #mhp-fill { height:100%; width:100%;
+      background:linear-gradient(90deg,#8a0000,#ff2020);
+      border-radius:5px; transition:width 0.2s; }
+    #mhp-status { position:absolute; right:4px; top:50%; transform:translateY(-50%);
+      font-size:0.6rem; color:#ffdddd; letter-spacing:1px; }
+
+    /* Floating hit numbers */
+    .hit-number { position:fixed; font-family:Georgia,serif; font-weight:bold;
+      pointer-events:none; z-index:300; text-shadow:2px 2px 4px #000;
+      animation: floatUp 1s ease-out forwards; }
+    @keyframes floatUp {
+      0%   { opacity:1; transform:translateY(0)  scale(1); }
+      60%  { opacity:1; transform:translateY(-40px) scale(1.1); }
+      100% { opacity:0; transform:translateY(-70px) scale(0.8); }
+    }
   </style>
 </head>
 <body>
@@ -71,7 +165,9 @@
   <button class="menu-btn" id="startBtn">Start Game</button>
   <div class="controls-hint">
     WASD — Lopen &nbsp;|&nbsp; Q/E — Draaien &nbsp;|&nbsp; Spatie — Aanvallen<br>
-    Klik canvas — Muis kijken aan/uit &nbsp;|&nbsp; R — Schild &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
+    F — Zware Slag &nbsp;|&nbsp; G — Ontwijkrol &nbsp;|&nbsp; V — Pareer &nbsp;|&nbsp; C — Wervelwind<br>
+    X — Schild Bash &nbsp;|&nbsp; Z — Executie (laag HP)<br>
+    Klik canvas — Muis kijken &nbsp;|&nbsp; R — Uitrusting &nbsp;|&nbsp; T — Kaart &nbsp;|&nbsp; ESC — Menu
   </div>
 </div>
 
@@ -119,14 +215,90 @@
 <div id="timer">⏱ 0:00</div>
 <div id="hearts"></div>
 <div id="shield-status">🛡 Schild Uitgerust</div>
+<div id="armour-bar" style="position:fixed;top:60px;left:18px;display:flex;flex-direction:column;gap:4px;pointer-events:none;">
+  <div id="hud-helm"  style="color:#a8d8ff;font-size:0.9rem;background:rgba(0,0,0,0.65);padding:4px 12px;border:1px solid #4a7aaa;border-radius:3px;display:none;letter-spacing:1px;">⛑ Helm uitgerust</div>
+  <div id="hud-chest" style="color:#ffd080;font-size:0.9rem;background:rgba(0,0,0,0.65);padding:4px 12px;border:1px solid #aa8a30;border-radius:3px;display:none;letter-spacing:1px;">🦺 Borstpantser uitgerust</div>
+  <div id="hud-boots" style="color:#c8a860;font-size:0.9rem;background:rgba(0,0,0,0.65);padding:4px 12px;border:1px solid #806030;border-radius:3px;display:none;letter-spacing:1px;">👢 Laarzen uitgerust</div>
+</div>
 <div id="look-hint">Klik canvas = muis kijken aan | ESC = uit</div>
 <div id="mouselook-indicator" title="Klik om muis-kijken te wisselen">🎯 Muis: UIT</div>
 <div id="controls-bar">[WASD] Lopen &nbsp;|&nbsp; [Q/E] Draaien &nbsp;|&nbsp; [Klik canvas] Muis kijken aan &nbsp;|&nbsp; [Spatie] Aanvallen &nbsp;|&nbsp; [R] Schild &nbsp;|&nbsp; [T] Kaart &nbsp;|&nbsp; [ESC] Menu</div>
 <div id="crosshair"></div>
 <div id="message"></div>
-<div id="minimap"><canvas id="mapCanvas" width="240" height="240"></canvas></div>
+<div id="minimap"><canvas id="mapCanvas" width="240" height="260"></canvas></div>
 <div id="damage-flash"></div>
 <div id="attack-flash"></div>
+<div id="parry-flash"></div>
+<div id="execute-flash"></div>
+<div id="dodge-flash"></div>
+<div id="rage-flash"></div>
+<div id="telegraph"></div>
+
+<!-- Status effect icons -->
+<div id="status-icons">
+  <div class="status-icon" id="si-bleed">🩸 Bloed</div>
+  <div class="status-icon" id="si-stun">⚡ Verdoofd</div>
+  <div class="status-icon" id="si-dodge">💨 Ontwijken</div>
+</div>
+
+<!-- Stamina bar -->
+<div id="stamina-wrap">
+  <div id="stamina-label">STAMINA</div>
+  <div id="stamina-bg"><div id="stamina-fill"></div></div>
+</div>
+
+<!-- Minotaur HP bar -->
+<div id="minotaur-hpbar">
+  <div id="mhp-label">&#x2694; MINOTAUR</div>
+  <div id="mhp-bg"><div id="mhp-fill"></div><span id="mhp-status"></span></div>
+</div>
+
+<!-- Skill hotbar -->
+<div id="skill-bar">
+  <div class="skill-slot" id="sk-heavy">
+    <span class="skill-key">F</span>
+    <span class="skill-icon">💥</span>
+    <span class="skill-name">Zware Slag</span>
+    <span class="skill-cd" id="cd-heavy"></span>
+  </div>
+  <div class="skill-slot" id="sk-dash">
+    <span class="skill-key">G</span>
+    <span class="skill-icon">💨</span>
+    <span class="skill-name">Ontwijkrol</span>
+    <span class="skill-cd" id="cd-dash"></span>
+  </div>
+  <div class="skill-slot" id="sk-parry">
+    <span class="skill-key">V</span>
+    <span class="skill-icon">🛡</span>
+    <span class="skill-name">Pareer</span>
+    <span class="skill-cd" id="cd-parry"></span>
+  </div>
+  <div class="skill-slot" id="sk-whirl">
+    <span class="skill-key">C</span>
+    <span class="skill-icon">🌀</span>
+    <span class="skill-name">Wervelwind</span>
+    <span class="skill-cd" id="cd-whirl"></span>
+  </div>
+  <div class="skill-slot locked" id="sk-bash">
+    <span class="skill-key">X</span>
+    <span class="skill-icon">🛡</span>
+    <span class="skill-name">Schild Bash</span>
+    <span class="skill-cd" id="cd-bash"></span>
+  </div>
+  <div class="skill-slot locked" id="sk-exec">
+    <span class="skill-key">Z</span>
+    <span class="skill-icon">⚡</span>
+    <span class="skill-name">Executie</span>
+    <span class="skill-cd" id="cd-exec"></span>
+  </div>
+</div>
+
+<!-- Combo counter -->
+<div id="combo">
+  <div id="combo-count">0</div>
+  <div id="combo-label">COMBO</div>
+  <div id="combo-finisher"></div>
+</div>
 
 <!-- On-screen turn pad -->
 <div id="turn-pad">
@@ -360,7 +532,105 @@ shieldGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.22,8,8),shieldRim));
 for (const rr of [0.45,0.68]){const ring=new THREE.Mesh(new THREE.TorusGeometry(rr,0.04,6,16),shieldRim);ring.rotation.x=Math.PI/2;shieldGroup.add(ring);}
 
 // =============================================
-// SWORD (screen-space)
+// ARMOUR PICKUPS
+// =============================================
+// Shared materials
+const steelMat  = new THREE.MeshLambertMaterial({color:0x8ab0d0, emissive:0x0a1a28, emissiveIntensity:0.3});
+const steelDark = new THREE.MeshLambertMaterial({color:0x4a6878});
+const goldTrim  = new THREE.MeshLambertMaterial({color:0xd4a843, emissive:0x4a2800, emissiveIntensity:0.4});
+const leatherMat= new THREE.MeshLambertMaterial({color:0x7a5030});
+
+// Place armour pieces in distinct maze locations (spread around the maze)
+// Helmet — north corridor area
+const helmetGroup = new THREE.Group();
+helmetGroup.position.set(Math.floor(MAZE_W/2), 1, 8);
+scene.add(helmetGroup);
+(()=>{
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(0.42,10,8,0,Math.PI*2,0,Math.PI*0.6),steelMat);
+  dome.position.set(0,0.1,0); helmetGroup.add(dome);
+  // Brim
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(0.52,0.48,0.1,12),steelDark);
+  brim.position.set(0,-0.12,0); helmetGroup.add(brim);
+  // Nose guard
+  const nose=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.28,0.06),steelDark);
+  nose.position.set(0,-0.08,0.38); helmetGroup.add(nose);
+  // Cheek guards
+  for(const s of[-1,1]){
+    const cheek=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.22,0.18),steelDark);
+    cheek.position.set(0.32*s,-0.08,0.28); helmetGroup.add(cheek);
+  }
+  // Gold crest ridge
+  const crest=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.18,0.6),goldTrim);
+  crest.position.set(0,0.38,0); helmetGroup.add(crest);
+  // Plume
+  for(let i=0;i<6;i++){
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.12,0.08),new THREE.MeshLambertMaterial({color:0xcc2020}));
+    p.position.set(0,0.52+i*0.06,-0.1+i*0.06); helmetGroup.add(p);
+  }
+})();
+
+// Chestplate — west corridor area
+const chestGroup = new THREE.Group();
+chestGroup.position.set(8, 1, Math.floor(MAZE_D/2));
+scene.add(chestGroup);
+(()=>{
+  // Main torso plate
+  const body=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.1,0.2),steelMat);
+  body.position.set(0,0,0); chestGroup.add(body);
+  // Shoulder pauldrons
+  for(const s of[-1,1]){
+    const paul=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.22,0.28),steelMat);
+    paul.position.set(0.6*s,0.42,0); chestGroup.add(paul);
+    const paulRim=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.06,0.32),steelDark);
+    paulRim.position.set(0.6*s,0.32,0); chestGroup.add(paulRim);
+  }
+  // Chest ridges (muscle lines)
+  for(let i=0;i<3;i++){
+    const ridge=new THREE.Mesh(new THREE.BoxGeometry(0.72,0.06,0.08),steelDark);
+    ridge.position.set(0,0.2-i*0.22,0.08); chestGroup.add(ridge);
+  }
+  // Centre rune / medallion
+  const medal=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.06,8),goldTrim);
+  medal.rotation.x=Math.PI/2; medal.position.set(0,0.3,0.1); chestGroup.add(medal);
+  // Belly plate (segmented)
+  for(let i=0;i<3;i++){
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.14,0.16),steelDark);
+    seg.position.set(0,-0.42-i*0.16,0); chestGroup.add(seg);
+  }
+  // Gold trim border
+  const border=new THREE.Mesh(new THREE.BoxGeometry(0.94,1.14,0.06),goldTrim);
+  border.position.set(0,0,-0.07); chestGroup.add(border);
+})();
+
+// Boots — south corridor area
+const bootsGroup = new THREE.Group();
+bootsGroup.position.set(Math.floor(MAZE_W/2), 1, MAZE_D-8);
+scene.add(bootsGroup);
+(()=>{
+  for(const s of[-1,1]){
+    const ox=s*0.22;
+    // Shin guard
+    const shin=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.5,0.22),steelMat);
+    shin.position.set(ox,0.2,0); bootsGroup.add(shin);
+    // Knee cap
+    const knee=new THREE.Mesh(new THREE.SphereGeometry(0.16,7,6),steelMat);
+    knee.position.set(ox,0.46,0.08); bootsGroup.add(knee);
+    // Ankle / foot
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.18,0.42),steelDark);
+    foot.position.set(ox,-0.08,0.06); bootsGroup.add(foot);
+    // Toe cap
+    const toe=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.14,0.18),steelMat);
+    toe.position.set(ox,-0.1,0.24); bootsGroup.add(toe);
+    // Gold ankle trim
+    const trim=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.06,0.26),goldTrim);
+    trim.position.set(ox,0.04,0.04); bootsGroup.add(trim);
+    // Strap buckles
+    for(let i=0;i<3;i++){
+      const strap=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.04,0.04),leatherMat);
+      strap.position.set(ox,0.0+i*0.16,-0.1); bootsGroup.add(strap);
+    }
+  }
+})();
 // =============================================
 const swordCamera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.01,10);
 const swordScene=new THREE.Scene();
@@ -402,7 +672,7 @@ let minimapVisible=false;
 
 // Pre-bake static maze layer
 const mazeOffscreen=document.createElement('canvas');
-mazeOffscreen.width=240; mazeOffscreen.height=240;
+mazeOffscreen.width=240; mazeOffscreen.height=260;
 const mazeCtx=mazeOffscreen.getContext('2d');
 (function prebake(){
   const W=240,H=240,cellW=W/MAZE_W,cellH=H/MAZE_D;
@@ -418,11 +688,101 @@ function drawMinimap(){
   mapCtx.drawImage(mazeOffscreen,0,0);
   // Thread
   for(const tp of threadPoints){ mapCtx.fillStyle='rgba(220,30,30,0.7)'; mapCtx.fillRect(tp.position.x*cellW-0.5,tp.position.z*cellH-0.5,2,2); }
-  // Shield
-  if(!shieldPickedUp){ mapCtx.fillStyle='#ffe840'; mapCtx.beginPath(); mapCtx.arc(shieldGroup.position.x*cellW,shieldGroup.position.z*cellH,3.5,0,Math.PI*2); mapCtx.fill(); mapCtx.strokeStyle='#a07010'; mapCtx.lineWidth=1; mapCtx.stroke(); }
-  // Minotaur
-  if(!minotaurDead){ mapCtx.fillStyle='#ff2222'; mapCtx.beginPath(); mapCtx.arc(minotaurGroup.position.x*cellW,minotaurGroup.position.z*cellH,4.5,0,Math.PI*2); mapCtx.fill(); mapCtx.strokeStyle='#880000'; mapCtx.lineWidth=1.5; mapCtx.stroke(); }
-  // Player arrow + view cone
+  const now = Date.now();
+
+  // WIN / RETURN ZONE (top-left start corner)
+  const winX = 2.5*cellW, winZ = 2.5*cellH;
+  const winPulse = 0.5 + 0.5*Math.sin(now*0.004);
+  mapCtx.save(); mapCtx.translate(winX, winZ);
+  if (minotaurDead) {
+    mapCtx.shadowColor='#00eeff'; mapCtx.shadowBlur=8*winPulse;
+    mapCtx.fillStyle=`rgba(0,${180+75*winPulse|0},255,${0.7+0.3*winPulse})`;
+    mapCtx.strokeStyle='#00ccff';
+  } else {
+    mapCtx.fillStyle='rgba(60,140,180,0.35)'; mapCtx.strokeStyle='rgba(60,140,180,0.5)';
+  }
+  mapCtx.beginPath();
+  for (let i=0;i<8;i++) { const a=i*Math.PI/4-Math.PI/2, r=i%2===0?5.5:2.5; i===0?mapCtx.moveTo(Math.cos(a)*r,Math.sin(a)*r):mapCtx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+  mapCtx.closePath(); mapCtx.fill(); mapCtx.lineWidth=1; mapCtx.stroke();
+  mapCtx.restore(); mapCtx.shadowBlur=0;
+
+  // SHIELD
+  if (!shieldPickedUp) {
+    const sx=shieldGroup.position.x*cellW, sz=shieldGroup.position.z*cellH;
+    const sPulse=0.6+0.4*Math.sin(now*0.003);
+    mapCtx.save(); mapCtx.translate(sx,sz);
+    mapCtx.shadowColor='#ffd000'; mapCtx.shadowBlur=4*sPulse;
+    mapCtx.fillStyle=`rgba(255,${210+45*sPulse|0},0,0.9)`;
+    mapCtx.strokeStyle='#a07010'; mapCtx.lineWidth=1;
+    mapCtx.beginPath(); mapCtx.moveTo(0,-5); mapCtx.lineTo(4,0); mapCtx.lineTo(0,5); mapCtx.lineTo(-4,0); mapCtx.closePath();
+    mapCtx.fill(); mapCtx.stroke(); mapCtx.restore(); mapCtx.shadowBlur=0;
+  }
+
+  // HELMET
+  if (!helmetPickedUp) {
+    const hx=helmetGroup.position.x*cellW, hz=helmetGroup.position.z*cellH;
+    const hPulse=0.6+0.4*Math.sin(now*0.0025+1);
+    mapCtx.save(); mapCtx.translate(hx,hz);
+    mapCtx.shadowColor='#80c8ff'; mapCtx.shadowBlur=4*hPulse;
+    mapCtx.fillStyle=`rgba(${100+55*hPulse|0},${180+55*hPulse|0},255,0.9)`;
+    mapCtx.strokeStyle='#3060aa'; mapCtx.lineWidth=1;
+    // Pentagon (helmet-like)
+    mapCtx.beginPath();
+    for(let i=0;i<5;i++){ const a=i*Math.PI*2/5-Math.PI/2; i===0?mapCtx.moveTo(Math.cos(a)*5,Math.sin(a)*5):mapCtx.lineTo(Math.cos(a)*5,Math.sin(a)*5); }
+    mapCtx.closePath(); mapCtx.fill(); mapCtx.stroke();
+    mapCtx.restore(); mapCtx.shadowBlur=0;
+  }
+
+  // CHESTPLATE
+  if (!chestPickedUp) {
+    const cx2=chestGroup.position.x*cellW, cz2=chestGroup.position.z*cellH;
+    const cPulse=0.6+0.4*Math.sin(now*0.0028+2);
+    mapCtx.save(); mapCtx.translate(cx2,cz2);
+    mapCtx.shadowColor='#ffc040'; mapCtx.shadowBlur=4*cPulse;
+    mapCtx.fillStyle=`rgba(255,${160+60*cPulse|0},0,0.9)`;
+    mapCtx.strokeStyle='#886010'; mapCtx.lineWidth=1;
+    // Square (chest plate)
+    mapCtx.beginPath(); mapCtx.rect(-4,-4,8,8);
+    mapCtx.fill(); mapCtx.stroke();
+    mapCtx.restore(); mapCtx.shadowBlur=0;
+  }
+
+  // BOOTS
+  if (!bootsPickedUp) {
+    const bx2=bootsGroup.position.x*cellW, bz2=bootsGroup.position.z*cellH;
+    const bPulse=0.6+0.4*Math.sin(now*0.0022+3);
+    mapCtx.save(); mapCtx.translate(bx2,bz2);
+    mapCtx.shadowColor='#c8a860'; mapCtx.shadowBlur=4*bPulse;
+    mapCtx.fillStyle=`rgba(${160+60*bPulse|0},${120+40*bPulse|0},60,0.9)`;
+    mapCtx.strokeStyle='#604020'; mapCtx.lineWidth=1;
+    // Triangle pointing up (boot tip)
+    mapCtx.beginPath(); mapCtx.moveTo(0,-5); mapCtx.lineTo(5,4); mapCtx.lineTo(-5,4); mapCtx.closePath();
+    mapCtx.fill(); mapCtx.stroke();
+    mapCtx.restore(); mapCtx.shadowBlur=0;
+  }
+
+  // MINOTAUR
+  const mxMap=minotaurGroup.position.x*cellW, mzMap=minotaurGroup.position.z*cellH;
+  if (!minotaurDead) {
+    const mPulse=0.6+0.4*Math.sin(now*0.006);
+    mapCtx.save(); mapCtx.translate(mxMap,mzMap);
+    mapCtx.shadowColor='#ff0000'; mapCtx.shadowBlur=5*mPulse;
+    mapCtx.beginPath(); mapCtx.arc(0,0,4.5,0,Math.PI*2);
+    mapCtx.fillStyle=`rgba(255,${20*mPulse|0},${20*mPulse|0},${0.8+0.2*mPulse})`; mapCtx.fill();
+    mapCtx.strokeStyle='#880000'; mapCtx.lineWidth=1.5; mapCtx.stroke();
+    mapCtx.strokeStyle='rgba(255,100,0,0.9)'; mapCtx.lineWidth=1.2;
+    mapCtx.beginPath(); mapCtx.moveTo(-3,-3); mapCtx.quadraticCurveTo(-7,-8,-5,-10); mapCtx.stroke();
+    mapCtx.beginPath(); mapCtx.moveTo(3,-3);  mapCtx.quadraticCurveTo(7,-8,5,-10);   mapCtx.stroke();
+    mapCtx.restore(); mapCtx.shadowBlur=0;
+  } else {
+    mapCtx.save(); mapCtx.translate(mxMap,mzMap);
+    mapCtx.strokeStyle='rgba(130,130,130,0.8)'; mapCtx.lineWidth=2;
+    mapCtx.beginPath(); mapCtx.moveTo(-4,-4); mapCtx.lineTo(4,4); mapCtx.stroke();
+    mapCtx.beginPath(); mapCtx.moveTo(4,-4); mapCtx.lineTo(-4,4); mapCtx.stroke();
+    mapCtx.restore();
+  }
+
+  // PLAYER arrow + view cone
   const px=playerPos.x*cellW, pz=playerPos.z*cellH;
   mapCtx.save(); mapCtx.translate(px,pz); mapCtx.rotate(-playerYaw);
   mapCtx.beginPath(); mapCtx.moveTo(0,0);
@@ -434,10 +794,20 @@ function drawMinimap(){
   mapCtx.beginPath(); mapCtx.moveTo(0,-7); mapCtx.lineTo(4,4); mapCtx.lineTo(0,1); mapCtx.lineTo(-4,4); mapCtx.closePath();
   mapCtx.fillStyle='#00ff80'; mapCtx.fill(); mapCtx.strokeStyle='#004422'; mapCtx.lineWidth=1; mapCtx.stroke();
   mapCtx.restore();
-  mapCtx.font='8px Georgia';
-  mapCtx.fillStyle='rgba(0,255,128,0.9)';  mapCtx.fillText('▲ Jij',4,H-24);
-  mapCtx.fillStyle='rgba(255,30,30,0.9)';  mapCtx.fillText('● Minotaur',4,H-14);
-  mapCtx.fillStyle='rgba(255,232,64,0.9)'; mapCtx.fillText('● Schild',4,H-4);
+
+  // LEGEND
+  mapCtx.font='7.5px Georgia';
+  const legendY=H-79;
+  mapCtx.fillStyle='rgba(0,0,0,0.55)'; mapCtx.fillRect(0,legendY-9,W,82);
+  mapCtx.fillStyle='rgba(0,255,128,0.9)'; mapCtx.fillText('▲ Jij',4,legendY);
+  mapCtx.fillStyle='rgba(255,30,30,0.9)'; mapCtx.fillText('● Minotaur',4,legendY+11);
+  mapCtx.fillStyle='rgba(255,210,0,0.9)'; mapCtx.fillText('◆ Schild',4,legendY+22);
+  mapCtx.fillStyle='rgba(120,190,255,0.9)';mapCtx.fillText('⬠ Helm',4,legendY+33);
+  mapCtx.fillStyle='rgba(255,170,30,0.9)'; mapCtx.fillText('■ Borstpantser',4,legendY+44);
+  mapCtx.fillStyle='rgba(180,140,60,0.9)'; mapCtx.fillText('▲ Laarzen',4,legendY+55);
+  mapCtx.fillStyle='rgba(0,190,255,0.9)';  mapCtx.fillText('✦ Terugkeerpunt',4,legendY+66);
+  if (minotaurDead) { mapCtx.fillStyle='rgba(0,220,255,1)'; mapCtx.fillText('← GA NAAR TERUGKEERPUNT!',4,legendY+77); }
+  else { mapCtx.fillStyle='rgba(120,100,80,0.8)'; mapCtx.fillText('Versla de Minotaur eerst!',4,legendY+77); }
 }
 
 // =============================================
@@ -455,6 +825,102 @@ function showMessage(txt,duration=3000){
 }
 function flashDamage(){const e=document.getElementById('damage-flash');e.style.opacity='1';setTimeout(()=>e.style.opacity='0',150);}
 function flashAttack(){const e=document.getElementById('attack-flash');e.style.opacity='1';setTimeout(()=>e.style.opacity='0',200);}
+function flashParry(){const e=document.getElementById('parry-flash');e.style.opacity='1';setTimeout(()=>e.style.opacity='0',200);}
+function flashExecute(){const e=document.getElementById('execute-flash');e.style.opacity='1';setTimeout(()=>e.style.opacity='0',300);}
+function flashDodge(){const e=document.getElementById('dodge-flash');e.style.opacity='1';setTimeout(()=>e.style.opacity='0',250);}
+
+// Floating damage numbers
+function spawnHitNumber(dmg, isBleed=false, isCrit=false){
+  const el=document.createElement('div');
+  el.className='hit-number';
+  const x=window.innerWidth/2+(Math.random()-0.5)*120;
+  const y=window.innerHeight/2+(Math.random()-0.5)*80;
+  el.style.left=x+'px'; el.style.top=y+'px';
+  if(isBleed){ el.textContent='🩸'+dmg.toFixed(1); el.style.color='#ff4040'; el.style.fontSize='1rem'; }
+  else if(isCrit){ el.textContent='💥'+dmg.toFixed(0)+'!'; el.style.color='#ffdd00'; el.style.fontSize='2rem'; }
+  else { el.textContent='-'+dmg.toFixed(0); el.style.color='#ff8040'; el.style.fontSize='1.4rem'; }
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1000);
+}
+
+function startCameraShake(intensity, duration){
+  shakeIntensity=intensity; shakeTimer=duration;
+}
+
+function addCombo(){
+  comboCount++;
+  comboResetTimer=COMBO_RESET;
+  const el=document.getElementById('combo-count');
+  el.textContent=comboCount;
+  el.style.transform='scale(1.4)';
+  setTimeout(()=>el.style.transform='scale(1)',120);
+  document.getElementById('combo').style.display= comboCount>=2 ? 'block':'none';
+  // Finisher hint
+  const fin=document.getElementById('combo-finisher');
+  if(comboCount>=3) fin.textContent='[Z] EXECUTIE BESCHIKBAAR!';
+  else fin.textContent='';
+}
+function resetCombo(){
+  comboCount=0;
+  document.getElementById('combo').style.display='none';
+  document.getElementById('combo-finisher').textContent='';
+}
+
+function updateStaminaHUD(){
+  document.getElementById('stamina-fill').style.width=(stamina/MAX_STAMINA*100)+'%';
+  const pct=stamina/MAX_STAMINA;
+  const r=pct>0.5?0:Math.round((1-pct*2)*255);
+  const g=pct>0.5?Math.round((pct-0.5)*2*160+80):80;
+  document.getElementById('stamina-fill').style.background=
+    `linear-gradient(90deg,rgb(${r},${g*0.4|0},${255*pct|0}),rgb(${r+40},${g},${200*pct|0}))`;
+}
+
+function updateSkillHUD(){
+  const skills=[
+    {id:'sk-heavy',cdId:'cd-heavy',cd:cdHeavy,  locked:false},
+    {id:'sk-dash', cdId:'cd-dash', cd:cdDash,   locked:false},
+    {id:'sk-parry',cdId:'cd-parry',cd:cdParry,  locked:false},
+    {id:'sk-whirl',cdId:'cd-whirl',cd:cdWhirl,  locked:false},
+    {id:'sk-bash', cdId:'cd-bash', cd:cdBash,   locked:!hasShield},
+    {id:'sk-exec', cdId:'cd-exec', cd:cdExec,   locked:false},
+  ];
+  for(const s of skills){
+    const el=document.getElementById(s.id);
+    const cd=document.getElementById(s.cdId);
+    el.classList.toggle('locked', s.locked);
+    if(s.locked){ cd.textContent='🔒 Schild nodig'; continue; }
+    if(s.cd>0){ el.classList.remove('ready'); cd.textContent=s.cd.toFixed(1)+'s'; }
+    else       { el.classList.add('ready');    cd.textContent='KLAAR'; }
+  }
+}
+
+function updateStatusHUD(){
+  document.getElementById('si-bleed').style.display = bleedStacks>0 ? 'block':'none';
+  if(bleedStacks>0) document.getElementById('si-bleed').textContent=`🩸×${bleedStacks}`;
+  document.getElementById('si-stun').style.display  = minotaurStunned ? 'block':'none';
+  document.getElementById('si-dodge').style.display = dodgeIframes>0 ? 'block':'none';
+}
+
+function updateMinotaurHPBar(){
+  const pct=Math.max(0,minotaurHealth/5);
+  document.getElementById('mhp-fill').style.width=(pct*100)+'%';
+  document.getElementById('mhp-fill').style.background=
+    minotaurEnraged ? 'linear-gradient(90deg,#ff0000,#ff8000)' : 'linear-gradient(90deg,#8a0000,#ff2020)';
+  // Status text on bar
+  const st=document.getElementById('mhp-status');
+  if(minotaurStunned) st.textContent='VERDOOFD';
+  else if(bleedStacks>0) st.textContent=`BLOEDING×${bleedStacks}`;
+  else if(minotaurEnraged) st.textContent='RAZEND';
+  else st.textContent='';
+}
+
+// Telegraph: show warning overlay, then execute delayed attack
+function startTelegraph(attackType, delay){
+  telegraphActive=true; telegraphTimer=delay; pendingAttackType=attackType;
+  document.getElementById('telegraph').style.opacity='0.9';
+  // Flash border to warn player
+  setTimeout(()=>document.getElementById('telegraph').style.opacity='0', delay*1000);
+}
 
 // =============================================
 // PLAYER STATE
@@ -464,10 +930,59 @@ let playerPos=new THREE.Vector3(2,playerHeight,2);
 let playerYaw=0, playerPitch=0;
 let playerLives=3, hasShield=false, shieldPickedUp=false;
 let isAttacking=false, attackCooldown=0, invincibleTimer=0;
+// Armour state: each piece reduces minotaur attack damage chance
+let hasHelmet=false, helmetPickedUp=false;
+let hasChest=false,  chestPickedUp=false;
+let hasBoots=false,  bootsPickedUp=false;
+
+// ── STAMINA ──
+const MAX_STAMINA = 100;
+let stamina = MAX_STAMINA;
+const STAMINA_REGEN = 18; // per second
+const STAMINA_COSTS = { normal:8, heavy:28, dash:18, whirl:35, bash:20, exec:15 };
+
+// ── SKILLS ──
+let cdHeavy=0, cdDash=0, cdParry=0, cdWhirl=0, cdBash=0, cdExec=0;
+const CD_HEAVY=4, CD_DASH=2.5, CD_PARRY=5, CD_WHIRL=8, CD_BASH=6, CD_EXEC=10;
+
+// ── PARRY window ──
+let parryActive=false, parryTimer=0;
+const PARRY_WINDOW=0.55;
+
+// ── DODGE ROLL (true i-frames) ──
+let dashVelX=0, dashVelZ=0, dashTimer=0;
+let dodgeIframes=0; // invincibility during roll
+const DASH_DURATION=0.28, DASH_SPEED=13;
+const DODGE_IFRAMES=0.25; // seconds of invincibility
+
+// ── COMBO ──
+let comboCount=0, comboResetTimer=0;
+const COMBO_RESET=2.5;
+const COMBO_DAMAGE_MULT=[1,1,1,1.5,1.5,2];
+
+// ── STATUS EFFECTS ──
+// Bleed: deals 0.5 damage per tick every 1s, up to 3 stacks
+let bleedStacks=0, bleedTimer=0, bleedTickTimer=0;
+const MAX_BLEED=3, BLEED_DURATION=4, BLEED_TICK=1.0, BLEED_DMG=0.5;
+// Stun: minotaur frozen, can't attack
+let minotaurStunned=false, stunTimer=0;
+
+// ── TELEGRAPH ──
+// Minotaur shows a wind-up before attacks
+let telegraphActive=false, telegraphTimer=0, pendingAttackType='normal';
+const TELEGRAPH_DURATION=0.7; // player has this long to react
+
+// ── CAMERA SHAKE ──
+let shakeTimer=0, shakeIntensity=0;
+
+// ── MINOTAUR PHASE ──
+let minotaurEnraged=false;
+let chargeTimer=0, charging=false, chargeDir=new THREE.Vector3();
 let minotaurHealth=5, minotaurDead=false, minotaurState='patrol';
 let minotaurPatrolTarget=new THREE.Vector3(Math.floor(MAZE_W/2),0,Math.floor(MAZE_D/2)-5);
 let minotaurAttackCooldown=0, minotaurBobTime=0;
-const MINOTAUR_CHASE_SPEED=2.8, MINOTAUR_PATROL_SPEED=1.0;
+const MINOTAUR_CHASE_SPEED_BASE=2.8, MINOTAUR_PATROL_SPEED=1.0;
+let MINOTAUR_CHASE_SPEED=MINOTAUR_CHASE_SPEED_BASE;
 const DETECTION_RANGE=14, ATTACK_RANGE=2.5;
 camera.position.copy(playerPos);
 
@@ -516,44 +1031,333 @@ function isWall(x,z){ const gx=Math.floor(x),gz=Math.floor(z); if(gx<0||gx>=MAZE
 function playerCanMove(nx,nz){ const r=playerRadius; return !isWall(nx-r,nz-r)&&!isWall(nx+r,nz-r)&&!isWall(nx-r,nz+r)&&!isWall(nx+r,nz+r); }
 
 // =============================================
-// ATTACK
+// COMBAT SKILLS
 // =============================================
+
+// ── Normal Attack (Space / Click) ──
 function doAttack(){
   if(!gameRunning||isAttacking||attackCooldown>0) return;
-  isAttacking=true; attackCooldown=0.5; swordSwinging=true; flashAttack();
+  if(stamina<STAMINA_COSTS.normal){ showMessage('Te weinig stamina!',800); return; }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.normal);
+  isAttacking=true; attackCooldown=0.45; swordSwinging=true; flashAttack();
+  if(tryHit(1, 4, 0.55)){
+    // 5+ combo: apply bleed on normal attacks too
+    if(comboCount>=5) applyBleed(1);
+  }
+  setTimeout(()=>{ isAttacking=false; swordSwinging=false; },280);
+}
+
+// ── Heavy Strike (F) — slow big hit, 2 damage, guaranteed bleed ──
+function doHeavyStrike(){
+  if(!gameRunning||cdHeavy>0) return;
+  if(stamina<STAMINA_COSTS.heavy){ showMessage('Te weinig stamina voor Zware Slag!',800); return; }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.heavy);
+  cdHeavy=CD_HEAVY; isAttacking=true;
+  swordGroup.rotation.z= -0.8; swordGroup.rotation.x= -1.2;
+  flashAttack(); startCameraShake(0.04, 0.25);
+  setTimeout(()=>{
+    swordGroup.rotation.z=0; swordGroup.rotation.x=0;
+    if(!minotaurDead && tryHit(2, 5, 0.45, true)){
+      applyBleed(2); // heavy always bleeds
+    }
+    isAttacking=false;
+  }, 400);
+}
+
+// ── Dodge Roll (G) — true i-frames, roll in facing direction ──
+function doDashAttack(){
+  if(!gameRunning||cdDash>0) return;
+  if(stamina<STAMINA_COSTS.dash){ showMessage('Te weinig stamina om te ontwijken!',800); return; }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.dash);
+  cdDash=CD_DASH;
+  const sinY=Math.sin(playerYaw), cosY=Math.cos(playerYaw);
+  dashVelX=-sinY*DASH_SPEED; dashVelZ=-cosY*DASH_SPEED;
+  dashTimer=DASH_DURATION;
+  dodgeIframes=DODGE_IFRAMES; // i-frames
+  flashDodge();
+  startCameraShake(0.025, 0.15);
+  // Sword dips during roll
+  swordGroup.rotation.x=0.6;
+  setTimeout(()=>{ swordGroup.rotation.x=0; }, DASH_DURATION*1000);
+}
+
+// ── Parry (V) — brief window; if minotaur attacks: stun + bonus ──
+function doParry(){
+  if(!gameRunning||cdParry>0) return;
+  if(stamina<8){ showMessage('Te weinig stamina om te pareren!',800); return; }
+  stamina=Math.max(0,stamina-8);
+  cdParry=CD_PARRY; parryActive=true; parryTimer=PARRY_WINDOW;
+  flashParry();
+  showMessage('⚡ Pareer gereed! Blokkeer de aanval!', PARRY_WINDOW*1000);
+  swordGroup.rotation.x=0.4; swordGroup.rotation.z=-0.3;
+  setTimeout(()=>{ swordGroup.rotation.x=0; swordGroup.rotation.z=0; },PARRY_WINDOW*1000);
+}
+
+// ── Whirlwind (C) — 360° spin, applies bleed on hit ──
+function doWhirlwind(){
+  if(!gameRunning||cdWhirl>0) return;
+  if(stamina<STAMINA_COSTS.whirl){ showMessage('Te weinig stamina voor Wervelwind!',800); return; }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.whirl);
+  cdWhirl=CD_WHIRL; isAttacking=true;
+  flashAttack(); startCameraShake(0.05, 0.5);
+  let spinElapsed=0;
+  const spinStep=()=>{
+    spinElapsed+=0.06;
+    swordGroup.parent && (swordGroup.rotation.y+=0.55);
+    if(spinElapsed<0.7) requestAnimationFrame(spinStep);
+    else { swordGroup.rotation.y=0; isAttacking=false; }
+  };
+  requestAnimationFrame(spinStep);
   if(!minotaurDead){
-    const toM=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
-    const fwd=new THREE.Vector3(-Math.sin(playerYaw),0,-Math.cos(playerYaw));
     const dist=playerPos.distanceTo(minotaurGroup.position);
-    if(dist<4&&fwd.dot(toM)>0.55){
-      minotaurHealth--;
-      showMessage(`Raak! Minotaur leven: ${minotaurHealth}/5`,1200);
-      minotaurGroup.position.addScaledVector(new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize(),2);
-      if(minotaurHealth<=0){ minotaurDead=true; minotaurGroup.visible=false; showMessage('Minotaur verslagen! Keer terug naar het begin!',5000); }
+    if(dist<4.5){
+      applyDamage(1, true);
+      applyBleed(1);
+      addCombo();
+      showMessage(`🌀 Wervelwind! Minotaur: ${Math.max(0,minotaurHealth).toFixed(0)}/5`,1200);
+      startCameraShake(0.06,0.3);
+      const kb=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+      minotaurGroup.position.addScaledVector(kb, 3);
+      updateMinotaurHPBar(); checkMinotaurDeath();
+    } else {
+      showMessage('🌀 Wervelwind! (mis — te ver)',1000);
     }
   }
-  setTimeout(()=>{ isAttacking=false; swordSwinging=false; },300);
+}
+
+// ── Shield Bash (X) — requires shield, stuns minotaur, low damage ──
+function doShieldBash(){
+  if(!gameRunning||cdBash>0) return;
+  if(!hasShield){ showMessage('⚠ Schild nodig voor Schild Bash! [R] om schild op te pakken.',1500); return; }
+  if(stamina<STAMINA_COSTS.bash){ showMessage('Te weinig stamina voor Schild Bash!',800); return; }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.bash);
+  cdBash=CD_BASH;
+  flashAttack(); startCameraShake(0.04, 0.2);
+  // Shield lunge animation
+  shieldScreenGroup.position.z=-0.35;
+  setTimeout(()=>shieldScreenGroup.position.z=-0.5, 250);
+  if(!minotaurDead){
+    const dist=playerPos.distanceTo(minotaurGroup.position);
+    const toM=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+    const fwd=new THREE.Vector3(-Math.sin(playerYaw),0,-Math.cos(playerYaw));
+    if(dist<4 && fwd.dot(toM)>0.4){
+      applyDamage(0.5);
+      applyStun(2.5); // stun for 2.5 seconds
+      addCombo();
+      showMessage(`🛡 Schild Bash! Minotaur verdoofd! (${(2.5).toFixed(1)}s)`,1500);
+      const kb=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+      minotaurGroup.position.addScaledVector(kb, 3.5);
+      startCameraShake(0.06, 0.3);
+      updateMinotaurHPBar(); checkMinotaurDeath();
+    } else {
+      showMessage('🛡 Schild Bash mis!',800);
+    }
+  }
+}
+
+// ── Execute (Z) — instant kill at ≤2HP, big combo finisher ──
+function doExecute(){
+  if(!gameRunning||cdExec>0) return;
+  if(stamina<STAMINA_COSTS.exec){ showMessage('Te weinig stamina voor Executie!',800); return; }
+  if(minotaurDead){ showMessage('Minotaur is al verslagen.',800); return; }
+  const dist=playerPos.distanceTo(minotaurGroup.position);
+  const toM=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+  const fwd=new THREE.Vector3(-Math.sin(playerYaw),0,-Math.cos(playerYaw));
+  if(dist>5 || fwd.dot(toM)<0.4){
+    showMessage('⚡ Executie: Te ver of verkeerde richting!',1000); return;
+  }
+  if(minotaurHealth>2 && comboCount<5){
+    showMessage(`⚡ Executie mislukt! Nodig: ≤2 HP of ≥5 combo (nu: ${minotaurHealth.toFixed(0)}HP, combo ${comboCount})`,2000);
+    return;
+  }
+  stamina=Math.max(0,stamina-STAMINA_COSTS.exec);
+  cdExec=CD_EXEC;
+  // Dramatic execute
+  flashExecute(); startCameraShake(0.12, 0.6);
+  swordGroup.rotation.x=-1.8; swordGroup.rotation.z=0.6;
+  setTimeout(()=>{ swordGroup.rotation.x=0; swordGroup.rotation.z=0; },500);
+  const isCrit = comboCount>=5;
+  const dmg = isCrit ? minotaurHealth+2 : minotaurHealth; // overkill for effect
+  applyDamage(dmg, isCrit);
+  spawnHitNumber(dmg, false, true);
+  showMessage(isCrit?`⚡💀 COMBO EXECUTIE! Verslagen met ${comboCount}× combo!`:`⚡ EXECUTIE! Minotaur verslagen!`,3000);
+  resetCombo();
+  updateMinotaurHPBar(); checkMinotaurDeath();
+}
+
+// ── Core helpers ──
+function applyDamage(dmg, isCrit=false){
+  if(minotaurDead) return;
+  const mult=COMBO_DAMAGE_MULT[Math.min(comboCount,COMBO_DAMAGE_MULT.length-1)];
+  minotaurHealth-=dmg*mult;
+  spawnHitNumber(dmg*mult, false, isCrit||mult>1);
+}
+
+function applyBleed(stacks){
+  if(minotaurDead) return;
+  bleedStacks=Math.min(bleedStacks+stacks, MAX_BLEED);
+  bleedTimer=BLEED_DURATION;
+  updateStatusHUD(); updateMinotaurHPBar();
+}
+
+function applyStun(duration){
+  if(minotaurDead) return;
+  minotaurStunned=true; stunTimer=duration;
+  updateStatusHUD(); updateMinotaurHPBar();
+}
+
+function tryHit(damage, range, minDot, isHeavy=false){
+  if(minotaurDead) return false;
+  const toM=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+  const fwd=new THREE.Vector3(-Math.sin(playerYaw),0,-Math.cos(playerYaw));
+  const dist=playerPos.distanceTo(minotaurGroup.position);
+  if(dist>range||fwd.dot(toM)<minDot) return false;
+  const mult=COMBO_DAMAGE_MULT[Math.min(comboCount,COMBO_DAMAGE_MULT.length-1)];
+  const finalDmg=damage*mult;
+  minotaurHealth-=finalDmg;
+  spawnHitNumber(finalDmg, false, mult>1);
+  addCombo(); updateMinotaurHPBar();
+  const kb=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+  minotaurGroup.position.addScaledVector(kb, isHeavy?3:2);
+  if(isHeavy){
+    showMessage(`💥 Zware Slag! Minotaur: ${Math.max(0,minotaurHealth).toFixed(0)}/5`,1400);
+    startCameraShake(0.08, 0.35);
+  } else {
+    showMessage(`Raak! ${Math.max(0,minotaurHealth).toFixed(0)}/5  ${comboCount>=3?'🔥 COMBO ×'+comboCount:''}`,1000);
+    startCameraShake(0.02, 0.15);
+  }
+  checkMinotaurDeath();
+  return true;
+}
+
+function checkMinotaurDeath(){
+  if(minotaurHealth<=0 && !minotaurDead){
+    minotaurDead=true; minotaurGroup.visible=false;
+    startCameraShake(0.1, 0.6);
+    showMessage('⚔ Minotaur verslagen! Keer terug naar het begin!',5000);
+    document.getElementById('minotaur-hpbar').style.display='none';
+    resetCombo(); bleedStacks=0; updateStatusHUD();
+  }
+}
+
+// ── Bleed tick (called every frame) ──
+function updateBleed(dt){
+  if(bleedStacks<=0||minotaurDead) return;
+  bleedTimer-=dt;
+  if(bleedTimer<=0){ bleedStacks=0; bleedTickTimer=0; updateStatusHUD(); updateMinotaurHPBar(); return; }
+  bleedTickTimer-=dt;
+  if(bleedTickTimer<=0){
+    bleedTickTimer=BLEED_TICK;
+    const dmg=BLEED_DMG*bleedStacks;
+    minotaurHealth-=dmg;
+    spawnHitNumber(dmg, true, false);
+    updateMinotaurHPBar();
+    checkMinotaurDeath();
+  }
+}
+
+// ── Stun tick ──
+function updateStun(dt){
+  if(!minotaurStunned) return;
+  stunTimer-=dt;
+  if(stunTimer<=0){ minotaurStunned=false; updateStatusHUD(); updateMinotaurHPBar(); }
 }
 
 // =============================================
-// MINOTAUR AI
+// MINOTAUR AI — Phase 1 + Phase 2 (enraged + charges) + Telegraph
 // =============================================
 function minotaurCanMoveTo(pos){ const gx=Math.floor(pos.x),gz=Math.floor(pos.z); if(gx<0||gx>=MAZE_W||gz<0||gz>=MAZE_D) return false; return expandedMaze[gz][gx]===0; }
+
 function updateMinotaur(dt){
   if(minotaurDead) return;
+
+  // ── Stun: skip all AI ──
+  if(minotaurStunned){
+    updateStun(dt);
+    // Shake minotaur in place
+    minotaurGroup.rotation.y+=Math.sin(Date.now()*0.04)*0.15;
+    return;
+  }
+
+  // ── Bleed tick ──
+  updateBleed(dt);
+
+  // ── Telegraph countdown ──
+  if(telegraphActive){
+    telegraphTimer-=dt;
+    if(telegraphTimer<=0){
+      telegraphActive=false;
+      document.getElementById('telegraph').style.opacity='0';
+      // Execute the telegraphed attack
+      minotaurExecuteAttack(pendingAttackType);
+    }
+    return; // frozen during windup
+  }
+
   const toPlayer=new THREE.Vector3().subVectors(playerPos,minotaurGroup.position); toPlayer.y=0;
   const dist=toPlayer.length();
+
+  // Phase transition
+  if(!minotaurEnraged && minotaurHealth<=2){
+    minotaurEnraged=true;
+    MINOTAUR_CHASE_SPEED=MINOTAUR_CHASE_SPEED_BASE*1.6;
+    minotaurAttackCooldown=0;
+    showMessage('☠ MINOTAUR RAAST! PAS OP VOOR CHARGES!',3000);
+    startCameraShake(0.08,0.8);
+    const rageEl=document.getElementById('rage-flash');
+    let rp=0; const ragePulse=()=>{
+      rp+=0.15; rageEl.style.opacity=String(Math.max(0,Math.sin(rp)*0.5));
+      if(rp<Math.PI*3) requestAnimationFrame(ragePulse); else rageEl.style.opacity='0';
+    }; requestAnimationFrame(ragePulse);
+  }
+
   if(dist<DETECTION_RANGE) minotaurState='chase';
   else if(dist>DETECTION_RANGE*1.5) minotaurState='patrol';
-  minotaurBobTime+=dt*3;
-  minotaurGroup.position.y=Math.sin(minotaurBobTime)*0.1;
-  redMat.emissiveIntensity=0.6+Math.sin(minotaurBobTime*2)*0.4;
+
+  minotaurBobTime+=dt*(minotaurEnraged?5:3);
+  minotaurGroup.position.y=Math.sin(minotaurBobTime)*0.12;
+  redMat.emissiveIntensity=minotaurEnraged ? 0.8+Math.sin(minotaurBobTime*4)*0.5 : 0.6+Math.sin(minotaurBobTime*2)*0.4;
+
+  // ── CHARGE (enraged only) ──
+  if(minotaurEnraged && !charging){
+    chargeTimer+=dt;
+    if(chargeTimer>4.5){
+      chargeTimer=0; charging=true;
+      chargeDir=toPlayer.clone().normalize();
+      // Telegraph the charge first
+      startTelegraph('charge', 0.6);
+      setTimeout(()=>{ charging=false; }, 1200);
+    }
+  }
+
+  if(charging){
+    const chargeSpeed=MINOTAUR_CHASE_SPEED*2.2;
+    const newPos=minotaurGroup.position.clone().addScaledVector(chargeDir,chargeSpeed*dt); newPos.y=0;
+    if(minotaurCanMoveTo(newPos)) minotaurGroup.position.copy(newPos);
+    else { charging=false; }
+    minotaurGroup.lookAt(new THREE.Vector3(playerPos.x,minotaurGroup.position.y,playerPos.z));
+    if(playerPos.distanceTo(minotaurGroup.position)<ATTACK_RANGE+0.5 && minotaurAttackCooldown<=0){
+      minotaurAttack('charge');
+    }
+    if(minotaurAttackCooldown>0) minotaurAttackCooldown-=dt;
+    return;
+  }
+
   if(minotaurState==='chase'){
     const dir=toPlayer.clone().normalize();
     const newPos=minotaurGroup.position.clone().addScaledVector(dir,MINOTAUR_CHASE_SPEED*dt); newPos.y=0;
     if(minotaurCanMoveTo(newPos)) minotaurGroup.position.copy(newPos);
     minotaurGroup.lookAt(new THREE.Vector3(playerPos.x,minotaurGroup.position.y,playerPos.z));
-    if(dist<ATTACK_RANGE&&minotaurAttackCooldown<=0) minotaurAttack();
+    if(dist<ATTACK_RANGE&&minotaurAttackCooldown<=0){
+      // Pick attack type: 60% swipe, 25% stomp (AoE), 15% lunge
+      const roll=Math.random();
+      const type = roll<0.6?'swipe': roll<0.85?'stomp':'lunge';
+      // Telegraph first (gives player time to react)
+      if(!telegraphActive){
+        startTelegraph(type, TELEGRAPH_DURATION);
+        minotaurAttackCooldown= minotaurEnraged ? 1.3 : 2.2; // set CD to prevent double-telegraph
+      }
+    }
   } else {
     const toDest=new THREE.Vector3().subVectors(minotaurPatrolTarget,minotaurGroup.position); toDest.y=0;
     if(toDest.length()<2){
@@ -567,22 +1371,100 @@ function updateMinotaur(dt){
   }
   if(minotaurAttackCooldown>0) minotaurAttackCooldown-=dt;
 }
-function minotaurAttack(){
+
+// Resolve telegraph attack after windup
+function minotaurExecuteAttack(type){
+  switch(type){
+    case 'swipe':  minotaurAttack('swipe');  break;
+    case 'stomp':  minotaurAttack('stomp');  break;
+    case 'lunge':  minotaurAttack('lunge');  break;
+    case 'charge': minotaurAttack('charge'); break;
+    default:       minotaurAttack('swipe');
+  }
+}
+
+function minotaurAttack(isCharge=false){
   if(gameOver||invincibleTimer>0) return;
-  minotaurAttackCooldown=2.0; invincibleTimer=1.5;
-  if(hasShield&&Math.random()<0.5){ showMessage('🛡 Schild geblokkeerd!',1000); return; }
+  minotaurAttackCooldown= minotaurEnraged ? 1.2 : 2.0;
+  invincibleTimer=1.5;
+
+  // Parry check — perfect timing reward
+  if(parryActive){
+    parryActive=false; parryTimer=0;
+    flashParry();
+    startCameraShake(0.06, 0.4);
+    // Stun minotaur: push back + free hit window
+    const kb=new THREE.Vector3().subVectors(minotaurGroup.position,playerPos).normalize();
+    minotaurGroup.position.addScaledVector(kb, 4);
+    minotaurAttackCooldown+=2; // extra stun
+    showMessage('✨ PERFECTE PAREER! Aanval gereed!', 1800);
+    invincibleTimer=0.5; // still briefly safe
+    return;
+  }
+
+  let blockChance = 0;
+  if(hasShield)  blockChance += 0.50;
+  if(hasHelmet)  blockChance += 0.20;
+  if(hasChest)   blockChance += 0.20;
+  if(hasBoots)   blockChance += 0.20;
+  // Charge attacks are harder to block
+  if(isCharge) blockChance *= 0.5;
+  blockChance = Math.min(blockChance, 0.90);
+
+  if(Math.random() < blockChance){
+    const blocker = hasShield ? '🛡 Schild' : hasChest ? '🦺 Borstpantser' : hasHelmet ? '⛑ Helm' : '👢 Laarzen';
+    showMessage(`${blocker} geblokkeerd!${isCharge?' (CHARGE)':''}`,1000);
+    startCameraShake(0.03,0.2);
+    return;
+  }
+
+  resetCombo();
   playerLives--; updateHearts(); flashDamage();
-  showMessage(playerLives>0?`Geraakt! Leven: ${playerLives}`:'',1000);
+  startCameraShake(isCharge?0.1:0.06, isCharge?0.5:0.3);
+  showMessage(playerLives>0?`${isCharge?'⚡ CHARGE — ':''}Geraakt! Leven: ${playerLives}`:'',1200);
   if(playerLives<=0){ gameOver=true; gameRunning=false; document.getElementById('lose-overlay').style.display='flex'; }
 }
 
 // =============================================
-// PLAYER MOVEMENT
+// PLAYER MOVEMENT + STAMINA + COOLDOWNS
 // =============================================
 const TURN_SPEED=1.8;
 function updatePlayer(dt){
+  // ── Skill key press (single-fire via keys state) ──
+  if(keys['KeyF']){ keys['KeyF']=false; doHeavyStrike(); }
+  if(keys['KeyG']){ keys['KeyG']=false; doDashAttack(); }
+  if(keys['KeyV']){ keys['KeyV']=false; doParry(); }
+  if(keys['KeyC']){ keys['KeyC']=false; doWhirlwind(); }
+
+  // ── Cooldown ticks ──
+  cdHeavy=Math.max(0,cdHeavy-dt);
+  cdDash =Math.max(0,cdDash -dt);
+  cdParry=Math.max(0,cdParry-dt);
+  cdWhirl=Math.max(0,cdWhirl-dt);
+  attackCooldown=Math.max(0,attackCooldown-dt);
+
+  // ── Parry window tick ──
+  if(parryActive){ parryTimer-=dt; if(parryTimer<=0){ parryActive=false; } }
+
+  // ── Combo reset ──
+  if(comboCount>0){ comboResetTimer-=dt; if(comboResetTimer<=0) resetCombo(); }
+
+  // ── Stamina regen (slower while moving, faster while still) ──
+  const isMoving=(keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||padKeys.fwd||padKeys.back);
+  stamina=Math.min(MAX_STAMINA, stamina+STAMINA_REGEN*(isMoving?0.6:1.0)*dt);
+  updateStaminaHUD(); updateSkillHUD();
+
+  // ── Camera shake ──
+  if(shakeTimer>0){
+    shakeTimer-=dt;
+    camera.position.x+=playerPos.x+(Math.random()-0.5)*shakeIntensity;
+    camera.position.y+=playerPos.y+(Math.random()-0.5)*shakeIntensity;
+    camera.position.z+=playerPos.z+(Math.random()-0.5)*shakeIntensity;
+  }
+
   if(keys['KeyQ']||padKeys.left)  playerYaw+=TURN_SPEED*dt;
   if(keys['KeyE']||padKeys.right) playerYaw-=TURN_SPEED*dt;
+
   const sinY=Math.sin(playerYaw),cosY=Math.cos(playerYaw);
   const forward=new THREE.Vector3(-sinY,0,-cosY);
   const right=new THREE.Vector3(cosY,0,-sinY);
@@ -592,13 +1474,26 @@ function updatePlayer(dt){
   if(keys['KeyA'])               move.addScaledVector(right,-1);
   if(keys['KeyD'])               move.addScaledVector(right,1);
   if(move.length()>0) move.normalize();
-  const nx=playerPos.x+move.x*5*dt, nz=playerPos.z+move.z*5*dt;
+
+  let nx=playerPos.x+move.x*5*dt;
+  let nz=playerPos.z+move.z*5*dt;
+
+  // ── Dash velocity ──
+  if(dashTimer>0){
+    dashTimer-=dt;
+    nx+=dashVelX*dt; nz+=dashVelZ*dt;
+  } else { dashVelX=0; dashVelZ=0; }
+
   if(playerCanMove(nx,playerPos.z)) playerPos.x=nx;
   if(playerCanMove(playerPos.x,nz)) playerPos.z=nz;
-  camera.position.copy(playerPos);
+
+  if(shakeTimer<=0){
+    camera.position.copy(playerPos);
+  }
   camera.rotation.order='YXZ'; camera.rotation.y=playerYaw; camera.rotation.x=playerPitch;
   if(invincibleTimer>0) invincibleTimer-=dt;
   if(keys['Space']){ keys['Space']=false; doAttack(); }
+
   // Ariadne thread
   threadTimer+=dt;
   if(playerPos.distanceTo(lastThreadPos)>0.6&&threadTimer>0.3){ addThreadPoint(playerPos); lastThreadPos.copy(playerPos); threadTimer=0; }
@@ -660,7 +1555,21 @@ function startGame(){
   gameRunning=true; gameOver=false; gameWon=false;
   playerLives=3; hasShield=false; shieldPickedUp=false;
   isAttacking=false; attackCooldown=0; invincibleTimer=0;
+  hasHelmet=false; helmetPickedUp=false;
+  hasChest=false;  chestPickedUp=false;
+  hasBoots=false;  bootsPickedUp=false;
+  // Combat reset
+  stamina=MAX_STAMINA; cdHeavy=0; cdDash=0; cdParry=0; cdWhirl=0;
+  parryActive=false; parryTimer=0; dashVelX=0; dashVelZ=0; dashTimer=0;
+  comboCount=0; comboResetTimer=0; shakeTimer=0; shakeIntensity=0;
+  minotaurEnraged=false; charging=false; chargeTimer=0;
+  MINOTAUR_CHASE_SPEED=MINOTAUR_CHASE_SPEED_BASE;
   document.getElementById('shield-status').style.display='none';
+  document.getElementById('hud-helm').style.display='none';
+  document.getElementById('hud-chest').style.display='none';
+  document.getElementById('hud-boots').style.display='none';
+  document.getElementById('combo').style.display='none';
+  document.getElementById('combo-count').textContent='0';
   playerPos.set(2,playerHeight,2); playerYaw=0; playerPitch=0;
   minotaurHealth=5; minotaurDead=false;
   minotaurGroup.position.set(Math.floor(MAZE_W/2)+0.5,0,Math.floor(MAZE_D/2)+0.5);
@@ -681,8 +1590,15 @@ function startGame(){
   document.getElementById('turn-pad').style.display='flex';
   document.getElementById('look-hint').style.display='block';
   document.getElementById('mouselook-indicator').style.display='block';
+  document.getElementById('stamina-wrap').style.display='block';
+  document.getElementById('skill-bar').style.display='flex';
+  document.getElementById('minotaur-hpbar').style.display='block';
+  updateMinotaurHPBar();
   setMouseLook(false);
   shieldGroup.visible=true;
+  helmetGroup.visible=true;
+  chestGroup.visible=true;
+  bootsGroup.visible=true;
 }
 document.getElementById('startBtn').addEventListener('click', startGame);
 
@@ -690,12 +1606,44 @@ document.addEventListener('keydown', e=>{
   if(!gameRunning) return;
   if(e.code==='KeyT'){ minimapVisible=!minimapVisible; document.getElementById('minimap').style.display=minimapVisible?'block':'none'; }
   if(e.code==='KeyR'){
-    if(!shieldPickedUp){
-      if(playerPos.distanceTo(shieldGroup.position)<4){ shieldPickedUp=true; hasShield=true; shieldGroup.visible=false; document.getElementById('shield-status').style.display='block'; showMessage('🛡 Schild uitgerust! Extra bescherming!'); }
-      else showMessage('Kom dichter bij het schild!',1500);
-    } else { hasShield=false; shieldPickedUp=false; shieldGroup.position.set(playerPos.x+1,1,playerPos.z); shieldGroup.visible=true; document.getElementById('shield-status').style.display='none'; }
+    // Find the nearest unequipped pickup within range and equip it
+    const pickups = [
+      { cond:!shieldPickedUp, group:shieldGroup, key:'shield' },
+      { cond:!helmetPickedUp, group:helmetGroup, key:'helmet' },
+      { cond:!chestPickedUp,  group:chestGroup,  key:'chest'  },
+      { cond:!bootsPickedUp,  group:bootsGroup,  key:'boots'  },
+    ].filter(p=>p.cond);
+    let nearest=null, nearestDist=4.5;
+    for(const p of pickups){
+      const d=playerPos.distanceTo(p.group.position);
+      if(d<nearestDist){ nearestDist=d; nearest=p; }
+    }
+    if(nearest){
+      switch(nearest.key){
+        case 'shield':
+          shieldPickedUp=true; hasShield=true; shieldGroup.visible=false;
+          document.getElementById('shield-status').style.display='block';
+          showMessage('🛡 Schild uitgerust! +50% blokkeer kans!'); break;
+        case 'helmet':
+          helmetPickedUp=true; hasHelmet=true; helmetGroup.visible=false;
+          document.getElementById('hud-helm').style.display='block';
+          showMessage('⛑ Helm uitgerust! +20% blokkeer kans!'); break;
+        case 'chest':
+          chestPickedUp=true; hasChest=true; chestGroup.visible=false;
+          document.getElementById('hud-chest').style.display='block';
+          showMessage('🦺 Borstpantser uitgerust! +20% blokkeer kans!'); break;
+        case 'boots':
+          bootsPickedUp=true; hasBoots=true; bootsGroup.visible=false;
+          document.getElementById('hud-boots').style.display='block';
+          showMessage('👢 Laarzen uitgerust! +20% blokkeer kans!'); break;
+      }
+    } else {
+      // Check if player is near any already-equipped item to drop it
+      if(hasShield){ hasShield=false; shieldPickedUp=false; shieldGroup.position.set(playerPos.x+1,1,playerPos.z); shieldGroup.visible=true; document.getElementById('shield-status').style.display='none'; showMessage('Schild neergelegd.',1200); }
+      else showMessage('Geen uitrusting in de buurt. [R] om op te pakken.',1800);
+    }
   }
-  if(e.code==='Escape'){ setMouseLook(false); gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('mouselook-indicator').style.display='none'; document.getElementById('menu').style.display='flex'; }
+  if(e.code==='Escape'){ setMouseLook(false); gameRunning=false; document.getElementById('turn-pad').style.display='none'; document.getElementById('look-hint').style.display='none'; document.getElementById('mouselook-indicator').style.display='none'; document.getElementById('stamina-wrap').style.display='none'; document.getElementById('skill-bar').style.display='none'; document.getElementById('minotaur-hpbar').style.display='none'; document.getElementById('combo').style.display='none'; document.getElementById('menu').style.display='flex'; }
 });
 
 function checkWin(){
@@ -706,6 +1654,10 @@ function checkWin(){
     document.getElementById('timer').style.display='none';
     document.getElementById('turn-pad').style.display='none';
     document.getElementById('mouselook-indicator').style.display='none';
+    document.getElementById('stamina-wrap').style.display='none';
+    document.getElementById('skill-bar').style.display='none';
+    document.getElementById('minotaur-hpbar').style.display='none';
+    document.getElementById('combo').style.display='none';
     document.getElementById('lb-btn').style.display='block';
     document.getElementById('win-time-text').textContent=`Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
     document.getElementById('win-overlay').style.display='flex';
@@ -713,10 +1665,15 @@ function checkWin(){
   }
 }
 function checkShieldProximity(){
-  if(!shieldPickedUp&&playerPos.distanceTo(shieldGroup.position)<5)
-    document.getElementById('controls-bar').textContent=`🛡 Schild vlakbij! [R] om op te pakken`;
+  const hints=[];
+  if(!shieldPickedUp && playerPos.distanceTo(shieldGroup.position)<5) hints.push('🛡 Schild');
+  if(!helmetPickedUp && playerPos.distanceTo(helmetGroup.position)<5) hints.push('⛑ Helm');
+  if(!chestPickedUp  && playerPos.distanceTo(chestGroup.position)<5)  hints.push('🦺 Borstpantser');
+  if(!bootsPickedUp  && playerPos.distanceTo(bootsGroup.position)<5)  hints.push('👢 Laarzen');
+  if(hints.length>0)
+    document.getElementById('controls-bar').textContent=`${hints.join(' & ')} vlakbij! [R] om op te pakken`;
   else
-    document.getElementById('controls-bar').textContent='[WASD] Lopen  |  [Q/E] Draaien  |  [Klik] Muis kijken  |  [Spatie] Aanvallen  |  [R] Schild  |  [T] Kaart  |  [ESC] Menu';
+    document.getElementById('controls-bar').textContent='[WASD] Lopen  |  [Q/E] Draaien  |  [Spatie] Aanvallen  |  [F] Zware Slag  |  [G] Stormloop  |  [V] Pareer  |  [C] Wervelwind  |  [R] Uitrusting  |  [T] Kaart';
 }
 
 // =============================================
@@ -729,10 +1686,13 @@ function animate(){
     elapsedSeconds=(performance.now()-gameStartTime)/1000;
     document.getElementById('timer').textContent=`⏱ ${formatTime(elapsedSeconds)}`;
     updatePlayer(dt); updateMinotaur(dt); checkWin(); checkShieldProximity();
+    updateMinotaurHPBar();
     shieldGroup.rotation.y+=dt*1.2;
+    helmetGroup.rotation.y+=dt*0.9;
+    chestGroup.rotation.y +=dt*0.7;
+    bootsGroup.rotation.y +=dt*1.0;
     swordSwingAngle=swordSwinging?Math.min(swordSwingAngle+dt*15,1.2):Math.max(swordSwingAngle-dt*8,0);
-    swordGroup.rotation.x=-swordSwingAngle*0.8; swordGroup.rotation.z=swordSwingAngle*0.3;
-    attackCooldown=Math.max(0,attackCooldown-dt);
+    swordGroup.rotation.x=-swordSwingAngle*0.8; swordGroup.rotation.z+=swordSwingAngle*0.3;
     shieldScreenGroup.visible=hasShield;
     if(minimapVisible) drawMinimap();
   }
