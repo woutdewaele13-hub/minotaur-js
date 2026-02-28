@@ -48,15 +48,19 @@
     #win-overlay h2  { font-size: 4rem; color: #80ff80; text-shadow: 0 0 40px #00ff0066; margin-bottom: 1rem; }
     #lose-overlay h2 { font-size: 4rem; color: #ff4040; text-shadow: 0 0 40px #ff000066; margin-bottom: 1rem; }
     #win-overlay p, #lose-overlay p { color: #aaa; font-size: 1.1rem; margin-bottom: 2rem; }
-    /* Look controls UI */
     #look-hint { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); color: #8a6030; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 3px; display: none; letter-spacing:1px; pointer-events:none; }
     #mouselook-indicator { position: fixed; top: 18px; right: 18px; font-size: 0.8rem; background: rgba(0,0,0,0.7); border: 1px solid #d4a843; color: #d4a843; padding: 5px 12px; border-radius: 3px; display: none; letter-spacing:1px; cursor:pointer; }
     #mouselook-indicator.active { border-color: #80ff80; color: #80ff80; }
-    /* On-screen arrow pad for turn */
     #turn-pad { position: fixed; bottom: 50px; right: 18px; display: none; flex-direction: column; align-items: center; gap: 4px; }
     .tp-row { display: flex; gap: 4px; }
     .tp-btn { width: 50px; height: 50px; background: rgba(212,168,67,0.18); border: 2px solid #d4a843; border-radius: 6px; color: #d4a843; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: none; }
     .tp-btn:active { background: rgba(212,168,67,0.4); }
+    /* Leaderboard */
+    #lb-list .lb-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid #3a2000; }
+    #lb-list .lb-rank { color:#d4a843; width:28px; }
+    #lb-list .lb-name { flex:1; }
+    #lb-list .lb-score { color:#80ff80; }
+    #lb-list .lb-mine  { color:#ffdd44; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -71,15 +75,45 @@
   </div>
 </div>
 
+<!-- WIN -->
 <div id="win-overlay">
   <h2>🏆 OVERWINNING!</h2>
   <p id="win-time-text">Je hebt de Minotaur verslagen!</p>
+  <div id="score-form" style="margin:1rem 0;">
+    <input id="player-name" type="text" maxlength="20" placeholder="Jouw naam..."
+      style="font-family:Georgia,serif;font-size:1.1rem;padding:0.5rem 1rem;background:#1a0800;
+             border:2px solid #d4a843;color:#f5d090;border-radius:3px;margin-bottom:0.5rem;width:220px;"/>
+    <br>
+    <button class="menu-btn" id="submit-score-btn">Score opslaan</button>
+  </div>
+  <div id="score-saved" style="display:none;color:#80ff80;margin-bottom:1rem;font-size:1rem;">✓ Score opgeslagen!</div>
   <button class="menu-btn" onclick="location.reload()">Opnieuw spelen</button>
 </div>
+
+<!-- LOSE -->
 <div id="lose-overlay">
   <h2>💀 GAME OVER</h2>
   <p>De Minotaur heeft je overwonnen...</p>
   <button class="menu-btn" onclick="location.reload()">Probeer opnieuw</button>
+</div>
+
+<!-- LEADERBOARD BUTTON -->
+<div id="lb-btn" onclick="toggleLeaderboard()"
+  style="position:fixed;top:18px;right:18px;background:rgba(0,0,0,0.7);
+         border:1px solid #d4a843;color:#d4a843;padding:6px 14px;
+         cursor:pointer;font-family:Georgia,serif;font-size:0.9rem;
+         border-radius:3px;z-index:50;display:none;letter-spacing:1px;">
+  🏆 Highscores
+</div>
+
+<!-- LEADERBOARD PANEL -->
+<div id="lb-panel"
+  style="position:fixed;top:60px;right:18px;width:280px;
+         background:rgba(10,5,0,0.95);border:2px solid #d4a843;
+         border-radius:4px;padding:1rem;z-index:60;display:none;
+         font-family:Georgia,serif;color:#f5d090;max-height:400px;overflow-y:auto;">
+  <h3 style="color:#d4a843;text-align:center;margin-bottom:0.8rem;letter-spacing:2px;">🏆 HIGHSCORES</h3>
+  <div id="lb-list" style="font-size:0.9rem;line-height:2;">Laden...</div>
 </div>
 
 <div id="timer">⏱ 0:00</div>
@@ -129,16 +163,21 @@ function generateMaze(cols, rows) {
     }
   }
   carve(1,1);
+  // Extra loops (~12% wall removal)
   for (let r=1;r<rows-1;r++) for (let c=1;c<cols-1;c++) if (grid[r][c]===1&&Math.random()<0.12) grid[r][c]=0;
+  // Solid border
   for (let c=0;c<cols;c++){grid[0][c]=1;grid[rows-1][c]=1;}
   for (let r=0;r<rows;r++){grid[r][0]=1;grid[r][cols-1]=1;}
+  // Centre arena (11×11)
   const arenaSz=11,startC=Math.floor((cols-arenaSz)/2),startR=Math.floor((rows-arenaSz)/2);
   for (let r=startR;r<startR+arenaSz;r++) for (let c=startC;c<startC+arenaSz;c++) grid[r][c]=0;
+  // Cardinal corridors into arena
   const midC=Math.floor(cols/2),midR=Math.floor(rows/2);
   for (let r=1;r<startR;r++) grid[r][midC]=0;
   for (let r=startR+arenaSz;r<rows-1;r++) grid[r][midC]=0;
   for (let c=1;c<startC;c++) grid[midR][c]=0;
   for (let c=startC+arenaSz;c<cols-1;c++) grid[midR][c]=0;
+  // Clear player start patch
   for (let r=1;r<=3;r++) for (let c=1;c<=3;c++) grid[r][c]=0;
   return grid;
 }
@@ -148,17 +187,18 @@ const MAZE_W=GRID_COLS, MAZE_D=GRID_ROWS;
 // =============================================
 // RENDERER
 // =============================================
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,1));
-renderer.shadowMap.enabled = false;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x000000, 0.065);
+scene.fog = new THREE.FogExp2(0x000000, 0.055); // v1 fog density
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 80);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 120);
 window.addEventListener('resize', ()=>{
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth/window.innerHeight;
@@ -168,30 +208,39 @@ window.addEventListener('resize', ()=>{
 });
 
 // =============================================
-// TEXTURES
+// TEXTURES (from v1 — higher quality, 128px)
 // =============================================
-function makeTexture(drawFn, size=64) {
+function makeTexture(drawFn, size=128) {
   const c=document.createElement('canvas'); c.width=c.height=size;
   drawFn(c.getContext('2d'),size);
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
 }
+
 const wallTex = makeTexture((ctx,s)=>{
   ctx.fillStyle='#4a3a2a'; ctx.fillRect(0,0,s,s);
-  for (let y=0;y<s;y+=16) {
+  for (let y=0;y<s;y+=16){
     const shift=(Math.floor(y/16)%2)*24;
-    for (let x=-shift;x<s+24;x+=48) {
-      ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(x+1,y+1,46,14);
-      ctx.fillStyle='rgba(80,60,40,0.2)'; ctx.fillRect(x+2,y+2,44,12);
+    for (let x=-shift;x<s+24;x+=48){
+      ctx.fillStyle=`rgba(0,0,0,${0.15+Math.random()*0.1})`; ctx.fillRect(x+1,y+1,46,14);
+      ctx.fillStyle=`rgba(80,60,40,${Math.random()*0.3})`; ctx.fillRect(x+2,y+2,44,12);
     }
   }
 });
+
 const floorTex = makeTexture((ctx,s)=>{
   ctx.fillStyle='#2a2018'; ctx.fillRect(0,0,s,s);
-  for (let i=0;i<80;i++){
+  for (let i=0;i<200;i++){
     ctx.fillStyle=`rgba(${80+Math.random()*40|0},${60+Math.random()*30|0},30,0.4)`;
-    ctx.fillRect(Math.random()*s,Math.random()*s,3,3);
+    const x=Math.random()*s, y=Math.random()*s;
+    ctx.fillRect(x,y,2+Math.random()*6,2+Math.random()*6);
+  }
+  ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1;
+  for (let i=0;i<s;i+=16){
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(s,i); ctx.stroke();
   }
 });
+
 wallTex.repeat.set(0.5,0.5); floorTex.repeat.set(0.25,0.25);
 
 const wallMat  = new THREE.MeshLambertMaterial({map:wallTex,  side:THREE.DoubleSide});
@@ -213,21 +262,50 @@ for (let z=0;z<MAZE_D;z++){
       const len=x-start;
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(len,5,1),wallMat);
       mesh.position.set(start+len/2,2.5,z+0.5);
+      mesh.receiveShadow=true;
       scene.add(mesh);
     } else x++;
   }
 }
 
-// Lighting
-scene.add(new THREE.AmbientLight(0x3a2510, 3.5));
-for (let z=4;z<MAZE_D-4;z+=8) for (let x=4;x<MAZE_W-4;x+=8) {
-  if(expandedMaze[z][x]===0&&Math.random()<0.65){
-    const bright=Math.random()>0.6;
-    const light=new THREE.PointLight(bright?0xff8830:0xdd4400, bright?3.0:1.5, bright?14:8);
-    light.position.set(x+0.5,4,z+0.5); scene.add(light);
-    const baseI=light.intensity;
-    const flicker=()=>{ light.intensity=baseI*(0.8+Math.random()*0.4); setTimeout(flicker,120+Math.random()*200); };
-    flicker();
+// =============================================
+// LIGHTING — v1 torch system (full fidelity)
+// =============================================
+// Low ambient so torches are the primary source
+const ambient = new THREE.AmbientLight(0x1a1008, 1.5);
+scene.add(ambient);
+
+// Scatter torches across open maze cells with variable brightness,
+// colour temperature, and authentic flickering — identical to v1
+for (let z=3; z<MAZE_D-3; z+=6) {
+  for (let x=3; x<MAZE_W-3; x+=6) {
+    if (expandedMaze[z][x] === 0) {
+      // ~25% spots stay completely dark for atmosphere
+      const roll = Math.random();
+      if (roll < 0.25) continue;
+
+      const isDim    = roll < 0.55; // 30% dim / reddish
+      const isBright = roll > 0.85; // 15% extra bright / warm yellow
+
+      const baseIntensity = isDim ? 0.6 : isBright ? 3.5 : 2.0;
+      const baseRange     = isDim ? 7   : isBright ? 18  : 12;
+      const col = isDim    ? 0xdd3800 :
+                  isBright ? 0xff9940 : 0xff6010;
+
+      const light = new THREE.PointLight(col, baseIntensity, baseRange);
+      light.position.set(x+0.5, 4, z+0.5);
+      scene.add(light);
+
+      // Flicker — dim ones are slower and subtler
+      const flickerFn = () => {
+        const swing = isDim ? 0.3 : isBright ? 1.8 : 1.2;
+        light.intensity = baseIntensity * (0.75 + Math.random() * swing * 0.5);
+        const delay = isDim ? 200 + Math.random()*400
+                            :  80 + Math.random()*180;
+        setTimeout(flickerFn, delay);
+      };
+      flickerFn();
+    }
   }
 }
 
@@ -243,21 +321,30 @@ const blackMat=new THREE.MeshLambertMaterial({color:0x111111});
 const redMat=new THREE.MeshLambertMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:0.8});
 function addBox(p,w,h,d,px,py,pz,m){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(px,py,pz);p.add(mesh);return mesh;}
 function addSphere(p,r,px,py,pz,m){const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,5,5),m);mesh.position.set(px,py,pz);p.add(mesh);return mesh;}
+// Torso
 addBox(minotaurGroup,1.2,2,0.8,0,2,0,skinMat);
+// Chest detail (from v1)
+for (let i=0;i<8;i++) addBox(minotaurGroup,0.25,0.12,0.15,(Math.random()-0.5),1.5+i*0.05,0.35,skinMat);
+// Head
 const headGroup=new THREE.Group(); headGroup.position.set(0,3.5,0.3); minotaurGroup.add(headGroup);
 addBox(headGroup,0.9,0.7,1.2,0,0,0,furMat); addBox(headGroup,0.6,0.4,0.8,0,-0.2,0.5,furMat);
 addSphere(headGroup,0.08,-0.15,-0.25,0.9,blackMat); addSphere(headGroup,0.08,0.15,-0.25,0.9,blackMat);
 addSphere(headGroup,0.1,-0.25,0.15,0.7,redMat); addSphere(headGroup,0.1,0.25,0.15,0.7,redMat);
+// Horns (v1 — 8 segments)
 for (const side of [-1,1]) {
-  for (let i=0;i<6;i++) addSphere(headGroup,Math.max(0.04,0.16-i*0.02),0.4*side+i*0.07*side,0.3+i*0.1,-i*0.04,hornMat);
+  for (let i=0;i<8;i++) addSphere(headGroup,Math.max(0.04,0.18-i*0.015),0.4*side+i*0.07*side,0.3+i*0.1,-i*0.04,hornMat);
+  // Arms
   addSphere(minotaurGroup,0.25,0.85*side,2.8,0,skinMat);
-  for (let i=0;i<5;i++) addBox(minotaurGroup,0.3,0.22,0.3,0.85*side,2.6-i*0.28,0,skinMat);
+  for (let i=0;i<6;i++) addBox(minotaurGroup,0.3,0.22,0.3,0.85*side,2.6-i*0.28,0,skinMat);
   addBox(minotaurGroup,0.4,0.3,0.3,0.85*side,-0.2,0.3,skinMat);
+  // Legs
   addSphere(minotaurGroup,0.25,0.5*side,0.8,0,furMat);
-  for (let i=0;i<4;i++) addBox(minotaurGroup,0.42,0.2,0.45,0.5*side,0.7-i*0.14,0,furMat);
-  for (let i=0;i<3;i++) addBox(minotaurGroup,0.35,0.17,0.32,0.5*side,0.1-i*0.02,-0.1-i*0.09,furMat);
+  for (let i=0;i<5;i++) addBox(minotaurGroup,0.42,0.2,0.45,0.5*side,0.7-i*0.14,0,furMat);
+  for (let i=0;i<4;i++) addBox(minotaurGroup,0.35,0.17,0.32,0.5*side,0.1-i*0.02,-0.1-i*0.09,furMat);
   addBox(minotaurGroup,0.5,0.22,0.65,0.5*side,-0.4,-0.5,blackMat);
 }
+// Tail (v1)
+for (let i=0;i<6;i++) addBox(minotaurGroup,0.12,0.12,0.18,0,1.5-i*0.15,-0.5-i*0.1,furMat);
 
 // =============================================
 // SHIELD PICKUP
@@ -267,10 +354,10 @@ shieldGroup.position.set(Math.floor(MAZE_W/2)+3,1,Math.floor(MAZE_D/2));
 scene.add(shieldGroup);
 const shieldMat=new THREE.MeshLambertMaterial({color:0xb07030});
 const shieldRim=new THREE.MeshLambertMaterial({color:0x8a5020});
-const shieldMesh=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.12,12),shieldMat);
-shieldMesh.rotation.x=Math.PI/2; shieldGroup.add(shieldMesh);
-shieldGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.22,6,6),shieldRim));
-for (const rr of [0.45,0.68]){const ring=new THREE.Mesh(new THREE.TorusGeometry(rr,0.04,5,12),shieldRim);ring.rotation.x=Math.PI/2;shieldGroup.add(ring);}
+const shieldMeshObj=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.12,16),shieldMat);
+shieldMeshObj.rotation.x=Math.PI/2; shieldGroup.add(shieldMeshObj);
+shieldGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.22,8,8),shieldRim));
+for (const rr of [0.45,0.68]){const ring=new THREE.Mesh(new THREE.TorusGeometry(rr,0.04,6,16),shieldRim);ring.rotation.x=Math.PI/2;shieldGroup.add(ring);}
 
 // =============================================
 // SWORD (screen-space)
@@ -285,11 +372,12 @@ for (let i=0;i<6;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(0.06-i*0.008,
 const tip=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.08,4),silverMat); tip.position.set(0,0.64,0); swordGroup.add(tip);
 const cg=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.04,0.04),bronzeMat); cg.position.set(0,-0.05,0); swordGroup.add(cg);
 for (let i=0;i<4;i++){const h=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.06,0.05),brownMat);h.position.set(0,-0.12-i*0.06,0);swordGroup.add(h);}
-const pommel=new THREE.Mesh(new THREE.SphereGeometry(0.06,5,5),bronzeMat); pommel.position.set(0,-0.38,0); swordGroup.add(pommel);
+const pommel=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),bronzeMat); pommel.position.set(0,-0.38,0); swordGroup.add(pommel);
 swordScene.add(new THREE.AmbientLight(0xffffff,2));
 let swordSwingAngle=0, swordSwinging=false;
+
 const shieldScreenGroup=new THREE.Group(); shieldScreenGroup.position.set(-0.28,-0.22,-0.5); shieldScreenGroup.visible=false;
-const shieldScreenMesh=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.03,10),shieldMat.clone()); shieldScreenMesh.rotation.x=Math.PI/2; shieldScreenGroup.add(shieldScreenMesh);
+const shieldScreenMesh=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.03,12),shieldMat.clone()); shieldScreenMesh.rotation.x=Math.PI/2; shieldScreenGroup.add(shieldScreenMesh);
 swordScene.add(shieldScreenGroup);
 
 // =============================================
@@ -299,90 +387,55 @@ const threadPoints=[];
 let threadTimer=0, lastThreadPos=new THREE.Vector3(2,0,2);
 const threadMat=new THREE.MeshBasicMaterial({color:0xff2020});
 function addThreadPoint(pos){
-  const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,4,4),threadMat);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.08,4,4),threadMat);
   m.position.copy(pos).setY(0.15);
   scene.add(m); threadPoints.push(m);
-  if(threadPoints.length>150) scene.remove(threadPoints.shift());
+  if(threadPoints.length>200) scene.remove(threadPoints.shift());
 }
 
 // =============================================
-// MINIMAP — accurate per-cell rendering
+// MINIMAP
 // =============================================
 const mapCanvas=document.getElementById('mapCanvas');
 const mapCtx=mapCanvas.getContext('2d');
 let minimapVisible=false;
 
-// Pre-render the static maze layer once
+// Pre-bake static maze layer
 const mazeOffscreen=document.createElement('canvas');
 mazeOffscreen.width=240; mazeOffscreen.height=240;
 const mazeCtx=mazeOffscreen.getContext('2d');
-function prebakeMinimap(){
-  const W=240,H=240;
-  const cellW=W/MAZE_W, cellH=H/MAZE_D;
+(function prebake(){
+  const W=240,H=240,cellW=W/MAZE_W,cellH=H/MAZE_D;
   mazeCtx.fillStyle='#0d0a06'; mazeCtx.fillRect(0,0,W,H);
-  for(let z=0;z<MAZE_D;z++){
-    for(let x=0;x<MAZE_W;x++){
-      if(expandedMaze[z][x]===1){
-        mazeCtx.fillStyle='#5a4a38';
-        mazeCtx.fillRect(x*cellW, z*cellH, cellW+0.5, cellH+0.5);
-      }
-    }
-  }
-  // Draw start marker
+  for(let z=0;z<MAZE_D;z++) for(let x=0;x<MAZE_W;x++)
+    if(expandedMaze[z][x]===1){ mazeCtx.fillStyle='#5a4a38'; mazeCtx.fillRect(x*cellW,z*cellH,cellW+0.5,cellH+0.5); }
   mazeCtx.fillStyle='rgba(0,200,80,0.25)';
-  mazeCtx.fillRect(1*cellW, 1*cellH, 3*cellW, 3*cellH);
-}
-prebakeMinimap();
+  mazeCtx.fillRect(cellW,cellH,3*cellW,3*cellH);
+})();
 
 function drawMinimap(){
-  const W=mapCanvas.width, H=mapCanvas.height;
-  const cellW=W/MAZE_W, cellH=H/MAZE_D;
-  // Draw static maze
+  const W=mapCanvas.width,H=mapCanvas.height,cellW=W/MAZE_W,cellH=H/MAZE_D;
   mapCtx.drawImage(mazeOffscreen,0,0);
-  // Ariadne thread
-  for(const tp of threadPoints){
-    mapCtx.fillStyle='rgba(220,30,30,0.7)';
-    mapCtx.fillRect(tp.position.x*cellW-0.5, tp.position.z*cellH-0.5, 2, 2);
-  }
-  // Shield icon
-  if(!shieldPickedUp){
-    mapCtx.fillStyle='#ffe840';
-    mapCtx.beginPath();
-    mapCtx.arc(shieldGroup.position.x*cellW, shieldGroup.position.z*cellH, 3.5, 0, Math.PI*2);
-    mapCtx.fill();
-    mapCtx.strokeStyle='#a07010'; mapCtx.lineWidth=1; mapCtx.stroke();
-  }
+  // Thread
+  for(const tp of threadPoints){ mapCtx.fillStyle='rgba(220,30,30,0.7)'; mapCtx.fillRect(tp.position.x*cellW-0.5,tp.position.z*cellH-0.5,2,2); }
+  // Shield
+  if(!shieldPickedUp){ mapCtx.fillStyle='#ffe840'; mapCtx.beginPath(); mapCtx.arc(shieldGroup.position.x*cellW,shieldGroup.position.z*cellH,3.5,0,Math.PI*2); mapCtx.fill(); mapCtx.strokeStyle='#a07010'; mapCtx.lineWidth=1; mapCtx.stroke(); }
   // Minotaur
-  if(!minotaurDead){
-    mapCtx.fillStyle='#ff2222';
-    mapCtx.beginPath();
-    mapCtx.arc(minotaurGroup.position.x*cellW, minotaurGroup.position.z*cellH, 4.5, 0, Math.PI*2);
-    mapCtx.fill();
-    mapCtx.strokeStyle='#880000'; mapCtx.lineWidth=1.5; mapCtx.stroke();
-  }
-  // Player — arrow + view cone
+  if(!minotaurDead){ mapCtx.fillStyle='#ff2222'; mapCtx.beginPath(); mapCtx.arc(minotaurGroup.position.x*cellW,minotaurGroup.position.z*cellH,4.5,0,Math.PI*2); mapCtx.fill(); mapCtx.strokeStyle='#880000'; mapCtx.lineWidth=1.5; mapCtx.stroke(); }
+  // Player arrow + view cone
   const px=playerPos.x*cellW, pz=playerPos.z*cellH;
-  // View cone
-  mapCtx.save();
-  mapCtx.translate(px, pz);
-  mapCtx.rotate(-playerYaw);
-  mapCtx.beginPath();
-  mapCtx.moveTo(0,0);
-  const coneLen=28, halfAngle=Math.PI/4;
-  mapCtx.lineTo(Math.sin(-halfAngle)*coneLen, -Math.cos(-halfAngle)*coneLen);
-  mapCtx.lineTo(Math.sin( halfAngle)*coneLen, -Math.cos( halfAngle)*coneLen);
-  mapCtx.closePath();
-  mapCtx.fillStyle='rgba(0,255,128,0.08)'; mapCtx.fill();
+  mapCtx.save(); mapCtx.translate(px,pz); mapCtx.rotate(-playerYaw);
+  mapCtx.beginPath(); mapCtx.moveTo(0,0);
+  const coneLen=28,halfAngle=Math.PI/4;
+  mapCtx.lineTo(Math.sin(-halfAngle)*coneLen,-Math.cos(-halfAngle)*coneLen);
+  mapCtx.lineTo(Math.sin( halfAngle)*coneLen,-Math.cos( halfAngle)*coneLen);
+  mapCtx.closePath(); mapCtx.fillStyle='rgba(0,255,128,0.08)'; mapCtx.fill();
   mapCtx.strokeStyle='rgba(0,255,128,0.25)'; mapCtx.lineWidth=1; mapCtx.stroke();
-  // Arrow body
-  mapCtx.beginPath();
-  mapCtx.moveTo(0,-7); mapCtx.lineTo(4,4); mapCtx.lineTo(0,1); mapCtx.lineTo(-4,4); mapCtx.closePath();
-  mapCtx.fillStyle='#00ff80'; mapCtx.fill();
-  mapCtx.strokeStyle='#004422'; mapCtx.lineWidth=1; mapCtx.stroke();
+  mapCtx.beginPath(); mapCtx.moveTo(0,-7); mapCtx.lineTo(4,4); mapCtx.lineTo(0,1); mapCtx.lineTo(-4,4); mapCtx.closePath();
+  mapCtx.fillStyle='#00ff80'; mapCtx.fill(); mapCtx.strokeStyle='#004422'; mapCtx.lineWidth=1; mapCtx.stroke();
   mapCtx.restore();
-  // Legend
   mapCtx.font='8px Georgia';
-  mapCtx.fillStyle='rgba(0,255,128,0.9)'; mapCtx.fillText('▲ Jij',4,H-24);
+  mapCtx.fillStyle='rgba(0,255,128,0.9)';  mapCtx.fillText('▲ Jij',4,H-24);
   mapCtx.fillStyle='rgba(255,30,30,0.9)';  mapCtx.fillText('● Minotaur',4,H-14);
   mapCtx.fillStyle='rgba(255,232,64,0.9)'; mapCtx.fillText('● Schild',4,H-4);
 }
@@ -419,17 +472,15 @@ const DETECTION_RANGE=14, ATTACK_RANGE=2.5;
 camera.position.copy(playerPos);
 
 // =============================================
-// INPUT — keyboard + canvas mouse look (no pointer lock)
+// INPUT — keyboard + mouse look (no pointer lock required)
 // =============================================
 const keys={};
 document.addEventListener('keydown', e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
 
-// Mouse look — always active while game runs, tracks delta each frame
 let mouseLookActive=false;
 let lastMouseX=null, lastMouseY=null;
 const MOUSE_SENS=0.003;
-
 const mlIndicator=document.getElementById('mouselook-indicator');
 
 function setMouseLook(on){
@@ -439,42 +490,24 @@ function setMouseLook(on){
   renderer.domElement.style.cursor=on?'none':'crosshair';
   if(!on){ lastMouseX=null; lastMouseY=null; }
 }
-
-// Track mouse movement over the entire window when active
 window.addEventListener('mousemove', e=>{
   if(!gameRunning||!mouseLookActive) return;
-  if(lastMouseX!==null){
-    const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY;
-    playerYaw   -= dx*MOUSE_SENS;
-    playerPitch -= dy*MOUSE_SENS;
-    playerPitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,playerPitch));
-  }
+  if(lastMouseX!==null){ const dx=e.clientX-lastMouseX,dy=e.clientY-lastMouseY; playerYaw-=dx*MOUSE_SENS; playerPitch-=dy*MOUSE_SENS; playerPitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,playerPitch)); }
   lastMouseX=e.clientX; lastMouseY=e.clientY;
 });
-
-// Reset last position when mouse re-enters window to avoid jump
 window.addEventListener('mouseenter', e=>{ lastMouseX=e.clientX; lastMouseY=e.clientY; });
-
-// Click canvas: first click = enable, subsequent = attack
 renderer.domElement.addEventListener('click', e=>{
   if(!gameRunning) return;
   if(!mouseLookActive){ setMouseLook(true); lastMouseX=e.clientX; lastMouseY=e.clientY; }
   else { doAttack(); }
 });
-
 mlIndicator.addEventListener('click', e=>{ e.stopPropagation(); if(gameRunning) setMouseLook(!mouseLookActive); });
 
-// On-screen pad buttons
+// On-screen pad
 const padKeys={ fwd:false, back:false, left:false, right:false };
-function setupPadBtn(id, key) {
-  const el=document.getElementById(id);
-  el.addEventListener('pointerdown', e=>{ padKeys[key]=true; e.preventDefault(); });
-  el.addEventListener('pointerup',   e=>{ padKeys[key]=false; });
-  el.addEventListener('pointerleave',e=>{ padKeys[key]=false; });
-}
-setupPadBtn('tp-fwd','fwd'); setupPadBtn('tp-back','back');
-setupPadBtn('tp-left','left'); setupPadBtn('tp-right','right');
-document.getElementById('tp-atk').addEventListener('pointerdown', e=>{ doAttack(); e.preventDefault(); });
+function setupPadBtn(id,key){ const el=document.getElementById(id); el.addEventListener('pointerdown',e=>{ padKeys[key]=true; e.preventDefault(); }); el.addEventListener('pointerup',()=>padKeys[key]=false); el.addEventListener('pointerleave',()=>padKeys[key]=false); }
+setupPadBtn('tp-fwd','fwd'); setupPadBtn('tp-back','back'); setupPadBtn('tp-left','left'); setupPadBtn('tp-right','right');
+document.getElementById('tp-atk').addEventListener('pointerdown',e=>{ doAttack(); e.preventDefault(); });
 
 // =============================================
 // COLLISION
@@ -544,18 +577,12 @@ function minotaurAttack(){
 }
 
 // =============================================
-// PLAYER MOVEMENT (keyboard + pad, no pointer lock)
+// PLAYER MOVEMENT
 // =============================================
-const TURN_SPEED = 1.8; // radians/sec for Q/E
+const TURN_SPEED=1.8;
 function updatePlayer(dt){
-  // Turning: Q / ArrowLeft / pad-left  →  turn left
-  //          E / ArrowRight/ pad-right →  turn right
-  if(keys['KeyQ']||keys['ArrowLeft']||padKeys.left)  playerYaw += TURN_SPEED*dt;
-  if(keys['KeyE']||keys['ArrowRight']||padKeys.right) playerYaw -= TURN_SPEED*dt;
-  // Pitch: not needed but keep gentle limits
-  if(keys['ArrowUp']   && !keys['KeyW']) playerPitch=Math.min(playerPitch+dt,Math.PI/4);
-  if(keys['ArrowDown'] && !keys['KeyS']) playerPitch=Math.max(playerPitch-dt,-Math.PI/4);
-
+  if(keys['KeyQ']||padKeys.left)  playerYaw+=TURN_SPEED*dt;
+  if(keys['KeyE']||padKeys.right) playerYaw-=TURN_SPEED*dt;
   const sinY=Math.sin(playerYaw),cosY=Math.cos(playerYaw);
   const forward=new THREE.Vector3(-sinY,0,-cosY);
   const right=new THREE.Vector3(cosY,0,-sinY);
@@ -571,12 +598,54 @@ function updatePlayer(dt){
   camera.position.copy(playerPos);
   camera.rotation.order='YXZ'; camera.rotation.y=playerYaw; camera.rotation.x=playerPitch;
   if(invincibleTimer>0) invincibleTimer-=dt;
-  // Space to attack
   if(keys['Space']){ keys['Space']=false; doAttack(); }
-  // Thread
+  // Ariadne thread
   threadTimer+=dt;
   if(playerPos.distanceTo(lastThreadPos)>0.6&&threadTimer>0.3){ addThreadPoint(playerPos); lastThreadPos.copy(playerPos); threadTimer=0; }
 }
+
+// =============================================
+// LEADERBOARD (local session + optional server)
+// =============================================
+let SCRIPT_URL=''; // paste Google Apps Script URL here if desired
+let localScores=[];
+async function loadScores(){
+  if(!SCRIPT_URL) return localScores;
+  try{ const res=await fetch(SCRIPT_URL+'?action=get'); const json=await res.json(); return Array.isArray(json)?json:localScores; } catch(e){ return localScores; }
+}
+async function saveScore(name,seconds,lives){
+  const entry={name:name.trim().slice(0,20)||'Anoniem',time:seconds,lives,date:new Date().toLocaleDateString('nl-NL')};
+  localScores.push(entry); localScores.sort((a,b)=>a.time-b.time||b.lives-a.lives); localScores=localScores.slice(0,20);
+  if(!SCRIPT_URL) return localScores;
+  try{ await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}); await new Promise(r=>setTimeout(r,800)); return await loadScores(); } catch(e){ return localScores; }
+}
+async function renderLeaderboard(highlightName){
+  const el=document.getElementById('lb-list');
+  el.innerHTML='<div style="color:#8a6030;text-align:center;padding:0.5rem;">Laden...</div>';
+  const scores=await loadScores();
+  if(!SCRIPT_URL){
+    el.innerHTML=`<div style="color:#d4a843;text-align:center;padding:0.5rem;font-size:0.8rem;line-height:1.6;">⚠ Geen server ingesteld.<br>Scores worden lokaal opgeslagen.</div>`+(scores.length?renderRows(scores,highlightName):''); return;
+  }
+  if(!scores.length){ el.innerHTML='<div style="color:#8a6030;text-align:center;padding:1rem;">Nog geen scores.<br>Wees de eerste!</div>'; return; }
+  el.innerHTML=renderRows(scores,highlightName);
+}
+function renderRows(scores,highlightName){
+  return scores.map((s,i)=>{
+    const mine=highlightName&&s.name===highlightName;
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    return `<div class="lb-row ${mine?'lb-mine':''}"><span class="lb-rank">${medal}</span><span class="lb-name">${s.name}</span><span class="lb-score">${formatTime(s.time)}&nbsp;❤${s.lives}</span></div>`;
+  }).join('');
+}
+function toggleLeaderboard(){ const panel=document.getElementById('lb-panel'); const visible=panel.style.display==='block'; panel.style.display=visible?'none':'block'; if(!visible) renderLeaderboard(null); }
+document.getElementById('submit-score-btn').addEventListener('click',async()=>{
+  const name=document.getElementById('player-name').value.trim()||'Anoniem';
+  const btn=document.getElementById('submit-score-btn'); btn.disabled=true; btn.textContent='Opslaan...';
+  await saveScore(name,Math.round(elapsedSeconds),playerLives);
+  document.getElementById('score-form').style.display='none';
+  document.getElementById('score-saved').style.display='block';
+  document.getElementById('lb-panel').style.display='block';
+  renderLeaderboard(name);
+});
 
 // =============================================
 // GAME STATE
@@ -584,7 +653,6 @@ function updatePlayer(dt){
 let gameRunning=false, gameOver=false, gameWon=false;
 let gameStartTime=0, elapsedSeconds=0;
 const clock=new THREE.Clock();
-
 function formatTime(s){ const n=Number(s); if(isNaN(n)||n<0) return '?:??'; return `${Math.floor(n/60)}:${Math.floor(n%60).toString().padStart(2,'0')}`; }
 
 function startGame(){
@@ -603,6 +671,13 @@ function startGame(){
   document.getElementById('timer').style.display='block';
   document.getElementById('win-overlay').style.display='none';
   document.getElementById('lose-overlay').style.display='none';
+  document.getElementById('lb-btn').style.display='none';
+  document.getElementById('lb-panel').style.display='none';
+  document.getElementById('score-form').style.display='block';
+  document.getElementById('score-saved').style.display='none';
+  document.getElementById('submit-score-btn').disabled=false;
+  document.getElementById('submit-score-btn').textContent='Score opslaan';
+  document.getElementById('player-name').value='';
   document.getElementById('turn-pad').style.display='flex';
   document.getElementById('look-hint').style.display='block';
   document.getElementById('mouselook-indicator').style.display='block';
@@ -631,8 +706,10 @@ function checkWin(){
     document.getElementById('timer').style.display='none';
     document.getElementById('turn-pad').style.display='none';
     document.getElementById('mouselook-indicator').style.display='none';
+    document.getElementById('lb-btn').style.display='block';
     document.getElementById('win-time-text').textContent=`Verslagen in ${formatTime(elapsedSeconds)} met ${playerLives} ❤ over!`;
     document.getElementById('win-overlay').style.display='flex';
+    renderLeaderboard(null);
   }
 }
 function checkShieldProximity(){
