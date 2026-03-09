@@ -1,29 +1,5 @@
-⚔️ Theseus & De Minotaurus: Het Labyrint
-Een meeslepende First-Person Action RPG gebaseerd op de klassieke Griekse mythologie, volledig speelbaar in de browser.
-
-🏛️ Over de Game
-In dit schoolproject kruip je in de huid van Theseus. Je bent diep in het hart van het labyrint van Knossos geworpen. Je missie: overleef het doolhof, volg het spoor en versla de beruchte Minotaurus.
-
-Genre: First-Person Action RPG
-
-Thema: Griekse Mythologie
-
-Platform: Web / Browser
-
-Technologie: JavaScript
-
-Status: Schoolproject / Prototype
-
-✨ Kenmerken
-Ga op zoek naar je Schild voor extra verdediging.
-
-De Draad van Ariadne: Verdwaal niet in de eindeloze gangen. De rode bolletjes markeren je pad – jouw enige houvast in de duisternis van het labyrint.
-
-First-Person Combat: Ervaar de actie vanuit de ogen van Theseus.
-
-Toegankelijkheid: Gebouwd in JavaScript, zodat de game direct in de browser draait zonder ingewikkelde installaties (in tegenstelling tot eerdere Python-versies).
-
 🕹️ Besturing
+dit spel is gemaakt met besturing zsqd en om de muis te gebruiken moet je 1 keer klikken
 🛠️ Gebruikte Technologieën
 Taal: JavaScript (ES6+)
 
@@ -34,11 +10,11 @@ Versiebeheer: Git & GitHub
 📦 Installatie & Spelen
 Omdat dit een JavaScript-project is, kun je het direct starten:
 
-Clone de repository: git clone https://github.com/jouwgebruikersnaam/project-naam.git
+ga naar code en druk op installeren, open de download en 
+Open index.html (de download) in je favoriete browser.
 
-Open index.html in je favoriete browser.
-
-(Optioneel) Bekijk de live demo via GitHub Pages!
+als er fouten zijn laat dit aub weten. en stuur een mail naar woutdewaele13@gmail.com dan kan ik dit oplossen
+als dit word gefikst moet je wel opnieuw downloaden.
 
 🙏 Speciale Dank
 Dit project is tot stand gekomen met hulp van:
